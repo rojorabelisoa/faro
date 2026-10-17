@@ -19,7 +19,7 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
 
 ## En cours
 
-- README (lancement local) puis CI GitHub Actions.
+- Phase 1 terminée. En attente de l'objectif fonctionnel pour découper la phase 2.
 
 ## À faire
 
@@ -31,8 +31,8 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
   - [x] Frontend React/Vite : squelette, connexion/déconnexion OIDC (PKCE) avec `react-oidc-context`
   - [x] Frontend : appel de `/api/me` avec le jeton, affichage de l'utilisateur connecté
   - [x] Test de bout en bout manuel (Keycloak 26.3 + backend + Vite + Playwright) : connexion, `/api/me` 200, utilisateur en base, déconnexion
-  - [ ] README : comment lancer le projet en local
-  - [ ] CI GitHub Actions : build et tests backend + frontend
+  - [x] README : comment lancer le projet en local
+  - [x] CI GitHub Actions : build et tests backend (avec service PostgreSQL) + frontend
 - [ ] Phase 2 : fonctionnalités métier (à découper une fois l'objectif défini)
 
 ## Fait
