@@ -8,9 +8,9 @@
 Application web Java + React, authentification OAuth2 / OpenID Connect, base PostgreSQL.
 Objectif fonctionnel : _à préciser avec l'utilisateur._
 
-## Stack (proposée, à confirmer)
+## Stack
 
-- Backend : Java 21, Spring Boot 3, Maven, Spring Security (resource server JWT), Spring Data JPA, Flyway
+- Backend : Java 21, Spring Boot 4.1, Maven, Spring Security (resource server JWT), Spring Data JPA, Flyway
 - Frontend : React + TypeScript + Vite, connexion OIDC avec Authorization Code + PKCE
 - Fournisseur OIDC : Keycloak en local (Docker), remplaçable par un autre fournisseur OIDC
 - Base de données : PostgreSQL (Docker)
@@ -19,16 +19,15 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
 
 ## En cours
 
-- _Rien pour l'instant._
+- Frontend React/Vite (dossier `frontend/`).
 
 ## À faire
 
 - [ ] Définir l'objectif fonctionnel et le périmètre avec l'utilisateur
-- [ ] Confirmer la stack proposée
 - [ ] Phase 1 : socle technique
-  - [ ] `docker-compose.yml` avec PostgreSQL et Keycloak (realm, client front, utilisateur de test importés)
-  - [ ] Backend Spring Boot : squelette, connexion Postgres, Flyway, endpoint `/api/health`
-  - [ ] Backend : sécurité resource server JWT validé par Keycloak, endpoint protégé `/api/me`
+  - [x] `docker-compose.yml` avec PostgreSQL et Keycloak (realm `faro`, client `faro-frontend`, utilisateurs `demo/demo` et `admin/admin`)
+  - [x] Backend Spring Boot : squelette, connexion Postgres, Flyway, endpoint `/api/health`
+  - [x] Backend : sécurité resource server JWT, endpoint protégé `/api/me` (enregistre l'utilisateur en base)
   - [ ] Frontend React/Vite : squelette, connexion/déconnexion OIDC (PKCE)
   - [ ] Frontend : appel de `/api/me` avec le jeton, affichage de l'utilisateur connecté
   - [ ] README : comment lancer le projet en local
@@ -42,9 +41,15 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
 ## Décisions
 
 - Le suivi de l'avancement se fait dans `PROGRESS.md`, mis à jour et poussé à chaque étape.
-- Stack demandée par l'utilisateur : Java, React, OAuth2/OIDC, PostgreSQL.
+- Stack demandée par l'utilisateur : Java, React, OAuth2/OIDC, PostgreSQL. Spring Boot confirmé.
+- Package Java racine : `com.faro`. Spring Boot 4 / Spring Security 7 (attention : starters modulaires, ex. `spring-boot-starter-webmvc`, et autorité `FACTOR_BEARER` ajoutée aux jetons).
+- Rôles : claim `roles` du jeton (mapper Keycloak des rôles du realm) → `ROLE_xxx`. `/api/admin/**` réservé au rôle `admin`.
+- Audience attendue dans le jeton : `faro-api` (mapper d'audience Keycloak sur le client `faro-frontend`).
+- Keycloak écoute sur le port 8180, le backend sur 8080, le frontend sur 5173.
+- Les tests backend sont des tests d'intégration sur un vrai PostgreSQL (base `faro`, utilisateur `faro/faro`), pas de Docker requis pour les tests.
 
 ## Bloquants / questions
 
 - Quel est l'objectif fonctionnel de faro ? (utilisateurs, fonctionnalités principales)
-- La stack proposée (Spring Boot, Maven, Vite, Keycloak) convient-elle ? Un fournisseur OIDC est-il déjà imposé (Google, Azure AD/Entra, Auth0…) ?
+- Un fournisseur OIDC est-il imposé en production (Google, Entra, Auth0…) ? Keycloak par défaut en attendant.
+- Keycloak n'a pas pu être lancé dans la session cloud (pas de Docker) : la connexion de bout en bout est à vérifier en local.

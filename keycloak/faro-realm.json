@@ -1,0 +1,77 @@
+{
+  "realm": "faro",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      { "name": "user", "description": "Utilisateur de faro" },
+      { "name": "admin", "description": "Administrateur de faro" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "faro-frontend",
+      "name": "faro (frontend React)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience faro-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "faro-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "demo",
+      "email": "demo@faro.local",
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Faro",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "demo", "temporary": false }],
+      "realmRoles": ["user"]
+    },
+    {
+      "username": "admin",
+      "email": "admin@faro.local",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Faro",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
+      "realmRoles": ["user", "admin"]
+    }
+  ]
+}

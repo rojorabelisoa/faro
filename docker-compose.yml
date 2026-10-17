@@ -1,0 +1,32 @@
+# Environnement de développement local : PostgreSQL + Keycloak (fournisseur OIDC).
+# Le backend et le frontend tournent sur la machine hôte (voir README).
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: faro
+      POSTGRES_USER: faro
+      POSTGRES_PASSWORD: faro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U faro -d faro"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    command: ["start-dev", "--import-realm", "--http-port=8180"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+
+volumes:
+  postgres-data:
