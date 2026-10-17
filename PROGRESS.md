@@ -19,7 +19,7 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
 
 ## En cours
 
-- Frontend React/Vite (dossier `frontend/`).
+- README (lancement local) puis CI GitHub Actions.
 
 ## À faire
 
@@ -28,8 +28,9 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
   - [x] `docker-compose.yml` avec PostgreSQL et Keycloak (realm `faro`, client `faro-frontend`, utilisateurs `demo/demo` et `admin/admin`)
   - [x] Backend Spring Boot : squelette, connexion Postgres, Flyway, endpoint `/api/health`
   - [x] Backend : sécurité resource server JWT, endpoint protégé `/api/me` (enregistre l'utilisateur en base)
-  - [ ] Frontend React/Vite : squelette, connexion/déconnexion OIDC (PKCE)
-  - [ ] Frontend : appel de `/api/me` avec le jeton, affichage de l'utilisateur connecté
+  - [x] Frontend React/Vite : squelette, connexion/déconnexion OIDC (PKCE) avec `react-oidc-context`
+  - [x] Frontend : appel de `/api/me` avec le jeton, affichage de l'utilisateur connecté
+  - [x] Test de bout en bout manuel (Keycloak 26.3 + backend + Vite + Playwright) : connexion, `/api/me` 200, utilisateur en base, déconnexion
   - [ ] README : comment lancer le projet en local
   - [ ] CI GitHub Actions : build et tests backend + frontend
 - [ ] Phase 2 : fonctionnalités métier (à découper une fois l'objectif défini)
@@ -46,10 +47,11 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
 - Rôles : claim `roles` du jeton (mapper Keycloak des rôles du realm) → `ROLE_xxx`. `/api/admin/**` réservé au rôle `admin`.
 - Audience attendue dans le jeton : `faro-api` (mapper d'audience Keycloak sur le client `faro-frontend`).
 - Keycloak écoute sur le port 8180, le backend sur 8080, le frontend sur 5173.
+- Frontend : React 19, Vite 8, TypeScript 7, tests Vitest + Testing Library. Config OIDC via `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, `VITE_API_URL` (voir `frontend/.env.example`). Jetons stockés en `sessionStorage`.
+- Dans une session cloud sans Docker : Keycloak peut être lancé depuis le zip officiel (`bin/kc.sh start-dev --import-realm --http-port=8180`) et PostgreSQL 16 est installé localement (`service postgresql start`).
 - Les tests backend sont des tests d'intégration sur un vrai PostgreSQL (base `faro`, utilisateur `faro/faro`), pas de Docker requis pour les tests.
 
 ## Bloquants / questions
 
 - Quel est l'objectif fonctionnel de faro ? (utilisateurs, fonctionnalités principales)
 - Un fournisseur OIDC est-il imposé en production (Google, Entra, Auth0…) ? Keycloak par défaut en attendant.
-- Keycloak n'a pas pu être lancé dans la session cloud (pas de Docker) : la connexion de bout en bout est à vérifier en local.
