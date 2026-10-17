@@ -6,7 +6,9 @@
 ## Objectif du projet
 
 Application web Java + React, authentification OAuth2 / OpenID Connect, base PostgreSQL.
-Objectif fonctionnel : _à préciser avec l'utilisateur._
+Objectif fonctionnel : **logiciel de pilotage intelligent de projets de construction / rénovation**
+(cockpit budget + planning + décisions/avenants + preuves, pour MOE/économistes, architectes, clients, investisseurs).
+Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 ## Stack
 
@@ -19,11 +21,11 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
 
 ## En cours
 
-- Phase 1 terminée. En attente de l'objectif fonctionnel pour découper la phase 2.
+- Brainstorm produit avec l'utilisateur (suivi dans `docs/brainstorm.md`) avant de découper la phase 2. Ne pas coder de métier avant la fin du brainstorm.
 
 ## À faire
 
-- [ ] Définir l'objectif fonctionnel et le périmètre avec l'utilisateur
+- [ ] Brainstorm : définir le périmètre du MVP avec l'utilisateur (`docs/brainstorm.md`)
 - [ ] Phase 1 : socle technique
   - [x] `docker-compose.yml` avec PostgreSQL et Keycloak (realm `faro`, client `faro-frontend`, utilisateurs `demo/demo` et `admin/admin`)
   - [x] Backend Spring Boot : squelette, connexion Postgres, Flyway, endpoint `/api/health`
@@ -53,5 +55,5 @@ Objectif fonctionnel : _à préciser avec l'utilisateur._
 
 ## Bloquants / questions
 
-- Quel est l'objectif fonctionnel de faro ? (utilisateurs, fonctionnalités principales)
+- Questions de cadrage du MVP : voir `docs/brainstorm.md`.
 - Un fournisseur OIDC est-il imposé en production (Google, Entra, Auth0…) ? Keycloak par défaut en attendant.
