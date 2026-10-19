@@ -21,7 +21,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 ## En cours
 
-- Brainstorm produit avec l'utilisateur (suivi dans `docs/brainstorm.md`) avant de découper la phase 2. Ne pas coder de métier avant la fin du brainstorm.
+- Brainstorm produit (suivi dans `docs/brainstorm.md`) : entretien métier avec la chargée d'études en cours (questions 1-3 répondues). Ne pas coder de métier avant la fin du brainstorm.
 
 ## À faire
 
