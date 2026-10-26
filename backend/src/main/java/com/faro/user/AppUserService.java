@@ -6,8 +6,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.faro.organisation.Organisation;
-import com.faro.organisation.OrganisationRepository;
+import com.faro.organisation.OrganisationService;
 
 @Service
 public class AppUserService {
@@ -15,11 +14,11 @@ public class AppUserService {
     static final String NOM_ORGANISATION_PAR_DEFAUT = "Mon entreprise";
 
     private final AppUserRepository repository;
-    private final OrganisationRepository organisationRepository;
+    private final OrganisationService organisationService;
 
-    public AppUserService(AppUserRepository repository, OrganisationRepository organisationRepository) {
+    public AppUserService(AppUserRepository repository, OrganisationService organisationService) {
         this.repository = repository;
-        this.organisationRepository = organisationRepository;
+        this.organisationService = organisationService;
     }
 
     /** Crée l'utilisateur à sa première visite, puis met à jour son profil depuis le jeton. */
@@ -47,7 +46,7 @@ public class AppUserService {
         });
         // En attendant les invitations, chaque nouvel utilisateur a sa propre organisation.
         if (user.getOrganisation() == null) {
-            user.setOrganisation(organisationRepository.save(new Organisation(NOM_ORGANISATION_PAR_DEFAUT)));
+            user.setOrganisation(organisationService.create(NOM_ORGANISATION_PAR_DEFAUT));
         }
         return repository.save(user);
     }
