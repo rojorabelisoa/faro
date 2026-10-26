@@ -1,56 +1,90 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from 'react-oidc-context'
-import { fetchMe, type Me } from './api'
+import { BrowserRouter, NavLink, Route, Routes } from 'react-router'
+import { createApi, type Me } from './api'
+import { SessionContext, useSession } from './ApiContext'
+import AffairesPage from './pages/AffairesPage'
+import AffairePage from './pages/AffairePage'
+import BibliothequePage from './pages/BibliothequePage'
 
 export default function App() {
   const auth = useAuth()
+  const accessToken = auth.user?.access_token
+  const api = useMemo(() => (accessToken ? createApi(accessToken) : null), [accessToken])
   const [me, setMe] = useState<Me | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const accessToken = auth.user?.access_token
 
+  // /api/me en premier : il crée l'utilisateur et son organisation à la première connexion.
   useEffect(() => {
-    if (!accessToken) {
+    if (!api) {
       setMe(null)
       return
     }
-    fetchMe(accessToken)
+    api.me()
       .then((data) => {
         setMe(data)
         setError(null)
       })
       .catch((e: Error) => setError(e.message))
-  }, [accessToken])
+  }, [api])
 
   if (auth.isLoading) {
-    return <main>Chargement…</main>
+    return <main className="centre">Chargement…</main>
   }
 
   if (auth.error) {
-    return <main role="alert">Erreur de connexion : {auth.error.message}</main>
+    return <main className="centre" role="alert">Erreur de connexion : {auth.error.message}</main>
   }
 
   if (!auth.isAuthenticated) {
     return (
-      <main>
+      <main className="centre">
         <h1>faro</h1>
-        <button onClick={() => void auth.signinRedirect()}>Se connecter</button>
+        <p>Le pilotage de vos chantiers de rénovation.</p>
+        <button className="primaire" onClick={() => void auth.signinRedirect()}>Se connecter</button>
       </main>
     )
   }
 
+  if (error) {
+    return <main className="centre" role="alert">{error}</main>
+  }
+
+  if (!api || !me) {
+    return <main className="centre">Chargement du profil…</main>
+  }
+
   return (
-    <main>
-      <h1>faro</h1>
-      {error && <p role="alert">{error}</p>}
-      {me ? (
-        <section>
-          <p>Bonjour {me.displayName ?? me.email ?? me.subject}</p>
-          <p>Rôles : {me.roles.join(', ') || 'aucun'}</p>
-        </section>
-      ) : (
-        !error && <p>Chargement du profil…</p>
-      )}
-      <button onClick={() => void auth.signoutRedirect()}>Se déconnecter</button>
-    </main>
+    <SessionContext.Provider value={{ api, me }}>
+      <BrowserRouter>
+        <Layout onLogout={() => void auth.signoutRedirect()}>
+          <Routes>
+            <Route path="/" element={<AffairesPage />} />
+            <Route path="/affaires/:id" element={<AffairePage />} />
+            <Route path="/bibliotheque" element={<BibliothequePage />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    </SessionContext.Provider>
+  )
+}
+
+function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: () => void }) {
+  const { me } = useSession()
+  return (
+    <>
+      <header className="entete">
+        <span className="logo">faro</span>
+        <nav>
+          <NavLink to="/" end>Affaires</NavLink>
+          <NavLink to="/bibliotheque">Bibliothèque</NavLink>
+        </nav>
+        <span className="utilisateur">
+          {me.displayName ?? me.email ?? me.subject} · {me.organisation.nom}
+        </span>
+        <button onClick={onLogout}>Se déconnecter</button>
+      </header>
+      <main className="contenu">{children}</main>
+    </>
   )
 }

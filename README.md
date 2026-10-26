@@ -49,7 +49,15 @@ cd frontend && npm test
 |---|---|---|
 | GET | `/api/health` | public |
 | GET | `/api/me` | connecté — renvoie l'utilisateur et l'enregistre en base |
+| CRUD | `/api/affaires` | affaires de l'entreprise |
+| CRUD | `/api/affaires/{id}/pieces` | pièces d'une affaire |
+| CRUD | `/api/lots` | lots / corps d'état (14 créés par défaut) |
+| CRUD | `/api/ouvrages?q=&lotId=` | bibliothèque d'ouvrages |
+| GET | `/api/affaires/{id}/devis` | lignes + totaux par pièce, par lot, par TVA |
+| POST/PUT/DELETE | `/api/affaires/{id}/lignes` | lignes de devis (`/lignes/depuis-ouvrage` pour copier un ouvrage) |
 | * | `/api/admin/**` | rôle `admin` |
+
+Toutes les routes métier sont cloisonnées par entreprise (organisation) de l'utilisateur connecté.
 
 ## Configuration
 

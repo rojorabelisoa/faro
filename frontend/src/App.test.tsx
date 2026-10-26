@@ -22,9 +22,25 @@ function mockAuth(overrides: Record<string, unknown>) {
   return auth
 }
 
+const ME = {
+  id: '1', subject: 's', email: 'demo@faro.local', displayName: 'Demo Faro', roles: ['user'],
+  organisation: { id: 'o', nom: 'Rénov Plus' },
+}
+
+/** Répond selon l'URL appelée, comme le ferait l'API. */
+function mockApi(routes: Record<string, unknown>) {
+  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const path = new URL(String(input)).pathname
+    if (!(path in routes)) return new Response('', { status: 404 })
+    const body = routes[path]
+    return typeof body === 'number' ? new Response('', { status: body }) : new Response(JSON.stringify(body))
+  })
+}
+
 describe('App', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    window.history.pushState({}, '', '/')
   })
 
   it('propose de se connecter quand personne ne l’est', async () => {
@@ -36,27 +52,27 @@ describe('App', () => {
     expect(auth.signinRedirect).toHaveBeenCalled()
   })
 
-  it('affiche l’utilisateur renvoyé par /api/me avec le jeton', async () => {
+  it('affiche l’utilisateur, son entreprise et ses affaires', async () => {
     mockAuth({ isAuthenticated: true, user: { access_token: 'jeton-123' } })
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(
-        JSON.stringify({ id: '1', subject: 's', email: 'demo@faro.local', displayName: 'Demo Faro', roles: ['user'] }),
-        { status: 200 },
-      ),
-    )
+    const fetchSpy = mockApi({
+      '/api/me': ME,
+      '/api/affaires': [{
+        id: 'a1', nom: 'T3 Victor Hugo', clientNom: 'M. Martin', typeBien: 'APPARTEMENT', statut: 'VISITE',
+      }],
+    })
 
     render(<App />)
 
-    expect(await screen.findByText('Bonjour Demo Faro')).toBeInTheDocument()
-    expect(screen.getByText('Rôles : user')).toBeInTheDocument()
-    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:8080/api/me', {
-      headers: { Authorization: 'Bearer jeton-123' },
-    })
+    expect(await screen.findByText('Demo Faro · Rénov Plus')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'T3 Victor Hugo' })).toHaveAttribute('href', '/affaires/a1')
+    expect(screen.getByText('Visite')).toBeInTheDocument()
+    expect(fetchSpy.mock.calls[0][0]).toBe('http://localhost:8080/api/me')
+    expect(fetchSpy.mock.calls[0][1]).toMatchObject({ headers: { Authorization: 'Bearer jeton-123' } })
   })
 
   it('affiche une erreur si l’API refuse le jeton', async () => {
     mockAuth({ isAuthenticated: true, user: { access_token: 'mauvais' } })
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 401 }))
+    mockApi({ '/api/me': 401 })
 
     render(<App />)
 

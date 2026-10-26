@@ -21,7 +21,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 ## En cours
 
-- 2.5 Frontend : liste et création des affaires (dossier `frontend/src`, ajout d'un routeur).
+- MVP devis pièces × lots utilisable. Prochaine étape : démo à la chargée d'études (2.8) et réponses aux questions de suivi de `docs/brainstorm.md`, avant de choisir la suite (CR de visite, estimation, export PDF, ProGBat…).
 - En parallèle : entretien métier non terminé (questions de suivi dans `docs/brainstorm.md`). L'utilisateur a demandé de commencer sans attendre.
 
 ## À faire
@@ -41,9 +41,10 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 2.2 Backend : pièces d'une affaire (nom, surface) et lots de l'organisation (liste par défaut créée avec l'organisation)
   - [x] 2.3 Backend : lignes de devis (pièce × lot, désignation, unité, quantité, PU HT, TVA) + synthèses par pièce et par lot (HT, TVA, TTC)
   - [x] 2.4 Backend : bibliothèque d'ouvrages de l'organisation, ajout d'une ligne depuis la bibliothèque
-  - [ ] 2.5 Frontend : liste et création des affaires
-  - [ ] 2.6 Frontend : écran affaire avec pièces, lignes de devis, bascule vue par pièce / vue par lot, totaux
-  - [ ] 2.7 Test de bout en bout + démo à montrer à la chargée d'études
+  - [x] 2.5 Frontend : liste et création des affaires
+  - [x] 2.6 Frontend : écran affaire avec pièces, lignes de devis, bascule vue par pièce / vue par lot, totaux
+  - [x] 2.7 Test de bout en bout (Playwright : affaire, 3 pièces, 12 lignes, bibliothèque, bascule pièce/lot, totaux vérifiés à la main)
+  - [ ] 2.8 Démo à la chargée d'études et recueil de ses retours (dans `docs/brainstorm.md`)
 - [ ] Plus tard (dépend de l'entretien métier) : CR de visite avec photos, estimation en fourchette, export / coexistence ProGBat, passage au chantier, travaux supplémentaires, marge réelle
 
 ## Fait
@@ -76,6 +77,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Supprimer une pièce ou un lot utilisé par des lignes → 409 (`ApiExceptionHandler`).
 - Bibliothèque : `/api/ouvrages?q=&lotId=` (recherche par mot dans la désignation). `POST /api/affaires/{id}/lignes/depuis-ouvrage {ouvrageId, pieceId, quantite}` copie l'ouvrage dans la ligne et garde `ouvrage_id` (lien perdu si l'ouvrage est supprimé, `ON DELETE SET NULL`) : base de la future boucle prix de référence / prix devisé / coût réel.
 - `Montants` est dans `com.faro.common` ; `Montants.tauxTva(saisi)` valide et normalise le taux (400 si invalide).
+- Frontend : React Router 7 (`/`, `/affaires/:id`, `/bibliotheque`), client API typé `createApi(token)` dans `src/api.ts`, session (api + me) via `SessionContext`. Saisie des nombres à la française (« 4,25 »). Le regroupement par pièce / par lot se fait côté front à partir de `GET /devis`.
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions
