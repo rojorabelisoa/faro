@@ -21,7 +21,8 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 ## En cours
 
-- Brainstorm produit (suivi dans `docs/brainstorm.md`) : entretien métier avec la chargée d'études en cours (questions 1-3 répondues). Ne pas coder de métier avant la fin du brainstorm.
+- 2.1 Organisation + affaires (backend : migration `V2`, package `com.faro.organisation` et `com.faro.affaire`).
+- En parallèle : entretien métier non terminé (questions de suivi dans `docs/brainstorm.md`). L'utilisateur a demandé de commencer sans attendre.
 
 ## À faire
 
@@ -35,7 +36,15 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] Test de bout en bout manuel (Keycloak 26.3 + backend + Vite + Playwright) : connexion, `/api/me` 200, utilisateur en base, déconnexion
   - [x] README : comment lancer le projet en local
   - [x] CI GitHub Actions : build et tests backend (avec service PostgreSQL) + frontend
-- [ ] Phase 2 : fonctionnalités métier (à découper une fois l'objectif défini)
+- [ ] Phase 2 : MVP « devis pièces × lots » (cible : entreprises de rénovation, voir `docs/brainstorm.md`)
+  - [ ] 2.1 Backend : organisation (entreprise) créée à la première connexion, affaires (CRUD) cloisonnées par organisation
+  - [ ] 2.2 Backend : pièces d'une affaire (nom, surface) et lots de l'organisation (liste par défaut créée avec l'organisation)
+  - [ ] 2.3 Backend : lignes de devis (pièce × lot, désignation, unité, quantité, PU HT, TVA) + synthèses par pièce et par lot (HT, TVA, TTC)
+  - [ ] 2.4 Backend : bibliothèque d'ouvrages de l'organisation, ajout d'une ligne depuis la bibliothèque
+  - [ ] 2.5 Frontend : liste et création des affaires
+  - [ ] 2.6 Frontend : écran affaire avec pièces, lignes de devis, bascule vue par pièce / vue par lot, totaux
+  - [ ] 2.7 Test de bout en bout + démo à montrer à la chargée d'études
+- [ ] Plus tard (dépend de l'entretien métier) : CR de visite avec photos, estimation en fourchette, export / coexistence ProGBat, passage au chantier, travaux supplémentaires, marge réelle
 
 ## Fait
 
@@ -52,6 +61,11 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Frontend : React 19, Vite 8, TypeScript 7, tests Vitest + Testing Library. Config OIDC via `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, `VITE_API_URL` (voir `frontend/.env.example`). Jetons stockés en `sessionStorage`.
 - Dans une session cloud sans Docker : Keycloak peut être lancé depuis le zip officiel (`bin/kc.sh start-dev --import-realm --http-port=8180`) et PostgreSQL 16 est installé localement (`service postgresql start`).
 - Les tests backend sont des tests d'intégration sur un vrai PostgreSQL (base `faro`, utilisateur `faro/faro`), pas de Docker requis pour les tests.
+
+- Vocabulaire métier en français dans le code du domaine (`Affaire`, `Piece`, `Lot`, `LigneDevis`), pour coller au langage de la chargée d'études.
+- Montants en `BigDecimal` / `NUMERIC` (quantités 3 décimales, prix et montants 2 décimales), TVA par ligne (5,5 / 10 / 20 %). Les totaux sont calculés côté serveur.
+- Multi-entreprise dès le départ : chaque donnée métier porte `organisation_id` ; un utilisateur appartient à une organisation (créée à sa première connexion en attendant les invitations). Accès à une donnée d'une autre organisation → 404.
+- Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions
 
