@@ -21,7 +21,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 ## En cours
 
-- 2.1 Organisation + affaires (backend : migration `V2`, package `com.faro.organisation` et `com.faro.affaire`).
+- 2.2 Pièces et lots (backend : migration `V3`, packages `com.faro.affaire` pour les pièces et `com.faro.lot`).
 - En parallèle : entretien métier non terminé (questions de suivi dans `docs/brainstorm.md`). L'utilisateur a demandé de commencer sans attendre.
 
 ## À faire
@@ -37,7 +37,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] README : comment lancer le projet en local
   - [x] CI GitHub Actions : build et tests backend (avec service PostgreSQL) + frontend
 - [ ] Phase 2 : MVP « devis pièces × lots » (cible : entreprises de rénovation, voir `docs/brainstorm.md`)
-  - [ ] 2.1 Backend : organisation (entreprise) créée à la première connexion, affaires (CRUD) cloisonnées par organisation
+  - [x] 2.1 Backend : organisation (entreprise) créée à la première connexion, affaires (CRUD) cloisonnées par organisation
   - [ ] 2.2 Backend : pièces d'une affaire (nom, surface) et lots de l'organisation (liste par défaut créée avec l'organisation)
   - [ ] 2.3 Backend : lignes de devis (pièce × lot, désignation, unité, quantité, PU HT, TVA) + synthèses par pièce et par lot (HT, TVA, TTC)
   - [ ] 2.4 Backend : bibliothèque d'ouvrages de l'organisation, ajout d'une ligne depuis la bibliothèque
@@ -65,6 +65,9 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Vocabulaire métier en français dans le code du domaine (`Affaire`, `Piece`, `Lot`, `LigneDevis`), pour coller au langage de la chargée d'études.
 - Montants en `BigDecimal` / `NUMERIC` (quantités 3 décimales, prix et montants 2 décimales), TVA par ligne (5,5 / 10 / 20 %). Les totaux sont calculés côté serveur.
 - Multi-entreprise dès le départ : chaque donnée métier porte `organisation_id` ; un utilisateur appartient à une organisation (créée à sa première connexion en attendant les invitations). Accès à une donnée d'une autre organisation → 404.
+- API REST en français : `/api/affaires`, erreurs au format ProblemDetail. Statuts d'affaire : VISITE, ESTIMATION, DOSSIER_TRAVAUX, CHANTIER, TERMINEE, PERDUE.
+- Tests d'intégration : `DatabaseCleaner` vide les tables avant chaque test, `TestTokens.user(sub)` simule un utilisateur (un sub = une organisation). Ajouter chaque nouvelle table dans `DatabaseCleaner`.
+- Le frontend doit appeler `/api/me` avant les autres appels à la première connexion (création utilisateur + organisation, évite une double création concurrente).
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions

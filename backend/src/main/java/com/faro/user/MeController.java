@@ -29,9 +29,14 @@ public class MeController {
             .filter(authority -> authority.startsWith("ROLE_"))
             .map(authority -> authority.substring("ROLE_".length()))
             .toList();
-        return new MeResponse(user.getId(), user.getSubject(), user.getEmail(), user.getDisplayName(), roles);
+        return new MeResponse(user.getId(), user.getSubject(), user.getEmail(), user.getDisplayName(), roles,
+            new OrganisationResponse(user.getOrganisation().getId(), user.getOrganisation().getNom()));
     }
 
-    public record MeResponse(UUID id, String subject, String email, String displayName, List<String> roles) {
+    public record MeResponse(UUID id, String subject, String email, String displayName, List<String> roles,
+            OrganisationResponse organisation) {
+    }
+
+    public record OrganisationResponse(UUID id, String nom) {
     }
 }

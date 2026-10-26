@@ -8,7 +8,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import com.faro.organisation.Organisation;
 
 /** Utilisateur connu de faro, identifié par le "sub" du fournisseur OIDC. */
 @Entity
@@ -32,6 +36,10 @@ public class AppUser {
 
     @Column(name = "last_login_at", nullable = false)
     private Instant lastLoginAt;
+
+    @ManyToOne
+    @JoinColumn(name = "organisation_id")
+    private Organisation organisation;
 
     protected AppUser() {
     }
@@ -76,5 +84,13 @@ public class AppUser {
 
     public void setLastLoginAt(Instant lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
+    }
+
+    public Organisation getOrganisation() {
+        return organisation;
+    }
+
+    public void setOrganisation(Organisation organisation) {
+        this.organisation = organisation;
     }
 }

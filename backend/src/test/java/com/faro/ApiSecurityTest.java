@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,9 +32,12 @@ class ApiSecurityTest {
     @Autowired
     private AppUserRepository userRepository;
 
+    @Autowired
+    private JdbcTemplate jdbc;
+
     @BeforeEach
     void cleanDatabase() {
-        userRepository.deleteAll();
+        DatabaseCleaner.clean(jdbc);
     }
 
     @Test
@@ -62,7 +66,8 @@ class ApiSecurityTest {
             .andExpect(jsonPath("$.subject").value("sub-123"))
             .andExpect(jsonPath("$.email").value("demo@faro.local"))
             .andExpect(jsonPath("$.displayName").value("demo"))
-            .andExpect(jsonPath("$.roles", containsInAnyOrder("user")));
+            .andExpect(jsonPath("$.roles", containsInAnyOrder("user")))
+            .andExpect(jsonPath("$.organisation.nom").value("Mon entreprise"));
 
         assertThat(userRepository.findBySubject("sub-123")).isPresent();
 

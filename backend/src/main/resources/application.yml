@@ -5,6 +5,9 @@ spring:
     url: ${FARO_DB_URL:jdbc:postgresql://localhost:5432/faro}
     username: ${FARO_DB_USER:faro}
     password: ${FARO_DB_PASSWORD:faro}
+  mvc:
+    problemdetails:
+      enabled: true
   jpa:
     open-in-view: false
     hibernate:
