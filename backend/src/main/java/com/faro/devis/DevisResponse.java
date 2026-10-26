@@ -18,6 +18,7 @@ public record DevisResponse(
             UUID id,
             UUID pieceId,
             UUID lotId,
+            UUID ouvrageId,
             String designation,
             String description,
             String unite,
@@ -30,7 +31,8 @@ public record DevisResponse(
         static LigneResponse from(LigneDevis ligne) {
             return new LigneResponse(ligne.getId(),
                 ligne.getPiece() != null ? ligne.getPiece().getId() : null,
-                ligne.getLot().getId(), ligne.getDesignation(), ligne.getDescription(), ligne.getUnite(),
+                ligne.getLot().getId(), ligne.getOuvrage() != null ? ligne.getOuvrage().getId() : null,
+                ligne.getDesignation(), ligne.getDescription(), ligne.getUnite(),
                 ligne.getQuantite(), ligne.getPrixUnitaireHt(), ligne.getTauxTva(), ligne.getMontantHt(),
                 ligne.getOrdre());
         }

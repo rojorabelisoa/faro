@@ -1,26 +1,25 @@
 package com.faro.devis;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.faro.affaire.Affaire;
 import com.faro.affaire.AffaireService;
 import com.faro.affaire.Piece;
 import com.faro.affaire.PieceService;
+import com.faro.bibliotheque.Ouvrage;
+import com.faro.bibliotheque.OuvrageService;
+import com.faro.common.Montants;
 import com.faro.common.NotFoundException;
 import com.faro.devis.DevisResponse.LigneResponse;
 import com.faro.devis.DevisResponse.TotalLot;
@@ -40,13 +39,15 @@ public class DevisService {
     private final AffaireService affaireService;
     private final PieceService pieceService;
     private final LotService lotService;
+    private final OuvrageService ouvrageService;
 
     public DevisService(LigneDevisRepository repository, AffaireService affaireService,
-            PieceService pieceService, LotService lotService) {
+            PieceService pieceService, LotService lotService, OuvrageService ouvrageService) {
         this.repository = repository;
         this.affaireService = affaireService;
         this.pieceService = pieceService;
         this.lotService = lotService;
+        this.ouvrageService = ouvrageService;
     }
 
     @Transactional(readOnly = true)
@@ -88,12 +89,24 @@ public class DevisService {
     }
 
     public LigneDevis create(Organisation organisation, UUID affaireId, LigneDevisRequest request) {
-        Affaire affaire = affaireService.get(organisation, affaireId);
-        int ordre = request.ordre() != null ? request.ordre()
-            : repository.findByAffaireIdOrderByOrdreAsc(affaire.getId()).stream()
-                .mapToInt(LigneDevis::getOrdre).max().orElse(0) + 1;
-        LigneDevis ligne = new LigneDevis(affaire, ordre);
+        LigneDevis ligne = newLigne(organisation, affaireId, request.ordre());
         apply(organisation, affaireId, ligne, request);
+        return repository.save(ligne);
+    }
+
+    /** Ajoute une ligne en copiant un ouvrage de la bibliothèque (modifiable ensuite comme toute ligne). */
+    public LigneDevis createFromOuvrage(Organisation organisation, UUID affaireId, LigneDepuisOuvrageRequest request) {
+        Ouvrage ouvrage = ouvrageService.get(organisation, request.ouvrageId());
+        LigneDevis ligne = newLigne(organisation, affaireId, null);
+        ligne.setOuvrage(ouvrage);
+        ligne.setPiece(piece(organisation, affaireId, request.pieceId()));
+        ligne.setLot(ouvrage.getLot());
+        ligne.setDesignation(ouvrage.getDesignation());
+        ligne.setDescription(ouvrage.getDescription());
+        ligne.setUnite(ouvrage.getUnite());
+        ligne.setQuantite(request.quantite());
+        ligne.setPrixUnitaireHt(ouvrage.getPrixUnitaireHt());
+        ligne.setTauxTva(ouvrage.getTauxTva());
         return repository.save(ligne);
     }
 
@@ -110,6 +123,18 @@ public class DevisService {
         repository.delete(get(organisation, affaireId, id));
     }
 
+    private LigneDevis newLigne(Organisation organisation, UUID affaireId, Integer ordre) {
+        Affaire affaire = affaireService.get(organisation, affaireId);
+        int position = ordre != null ? ordre
+            : repository.findByAffaireIdOrderByOrdreAsc(affaire.getId()).stream()
+                .mapToInt(LigneDevis::getOrdre).max().orElse(0) + 1;
+        return new LigneDevis(affaire, position);
+    }
+
+    private Piece piece(Organisation organisation, UUID affaireId, UUID pieceId) {
+        return pieceId != null ? pieceService.get(organisation, affaireId, pieceId) : null;
+    }
+
     private LigneDevis get(Organisation organisation, UUID affaireId, UUID id) {
         Affaire affaire = affaireService.get(organisation, affaireId);
         return repository.findByIdAndAffaireId(id, affaire.getId())
@@ -117,19 +142,14 @@ public class DevisService {
     }
 
     private void apply(Organisation organisation, UUID affaireId, LigneDevis ligne, LigneDevisRequest request) {
-        BigDecimal tauxTva = Objects.requireNonNullElse(request.tauxTva(), Montants.TAUX_TVA_PAR_DEFAUT);
-        if (!Montants.tauxValide(tauxTva)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Taux de TVA invalide : " + tauxTva + " (autorisés : 0, 5.5, 10, 20)");
-        }
-        ligne.setPiece(request.pieceId() != null ? pieceService.get(organisation, affaireId, request.pieceId()) : null);
+        ligne.setTauxTva(Montants.tauxTva(request.tauxTva()));
+        ligne.setPiece(piece(organisation, affaireId, request.pieceId()));
         ligne.setLot(lotService.get(organisation, request.lotId()));
         ligne.setDesignation(request.designation());
         ligne.setDescription(request.description());
         ligne.setUnite(request.unite());
         ligne.setQuantite(request.quantite());
         ligne.setPrixUnitaireHt(request.prixUnitaireHt());
-        ligne.setTauxTva(tauxTva.setScale(2, RoundingMode.HALF_UP));
     }
 
     private static BigDecimal totalHt(List<LigneDevis> lignes) {

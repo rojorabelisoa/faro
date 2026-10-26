@@ -1,10 +1,12 @@
-package com.faro.devis;
+package com.faro.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.web.server.ResponseStatusException;
 
 class MontantsTest {
 
@@ -23,10 +25,10 @@ class MontantsTest {
 
     @Test
     void acceptsOnlyRenovationVatRates() {
-        assertThat(Montants.tauxValide(new BigDecimal("5.5"))).isTrue();
-        assertThat(Montants.tauxValide(new BigDecimal("10"))).isTrue();
-        assertThat(Montants.tauxValide(new BigDecimal("20.00"))).isTrue();
-        assertThat(Montants.tauxValide(new BigDecimal("0"))).isTrue();
-        assertThat(Montants.tauxValide(new BigDecimal("7"))).isFalse();
+        assertThat(Montants.tauxTva(new BigDecimal("5.5"))).isEqualTo(new BigDecimal("5.50"));
+        assertThat(Montants.tauxTva(new BigDecimal("20"))).isEqualTo(new BigDecimal("20.00"));
+        assertThat(Montants.tauxTva(new BigDecimal("0"))).isEqualTo(new BigDecimal("0.00"));
+        assertThat(Montants.tauxTva(null)).isEqualTo(new BigDecimal("10.00"));
+        assertThatThrownBy(() -> Montants.tauxTva(new BigDecimal("7"))).isInstanceOf(ResponseStatusException.class);
     }
 }

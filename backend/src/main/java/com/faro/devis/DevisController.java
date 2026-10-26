@@ -41,6 +41,13 @@ public class DevisController {
         return LigneResponse.from(devisService.create(organisation, affaireId, request));
     }
 
+    @PostMapping("/lignes/depuis-ouvrage")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LigneResponse createFromOuvrage(@CurrentOrganisation Organisation organisation,
+            @PathVariable UUID affaireId, @Valid @RequestBody LigneDepuisOuvrageRequest request) {
+        return LigneResponse.from(devisService.createFromOuvrage(organisation, affaireId, request));
+    }
+
     @PutMapping("/lignes/{id}")
     public LigneResponse update(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
             @PathVariable UUID id, @Valid @RequestBody LigneDevisRequest request) {

@@ -1,8 +1,11 @@
-package com.faro.devis;
+package com.faro.common;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Set;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 /** Règles de calcul des montants (arrondi au centime, demi supérieur). */
 public final class Montants {
@@ -27,8 +30,14 @@ public final class Montants {
         return arrondi(baseHt.multiply(taux).divide(CENT));
     }
 
-    public static boolean tauxValide(BigDecimal taux) {
-        return TAUX_TVA.contains(taux.setScale(2, RoundingMode.HALF_UP));
+    /** Taux saisi (null = taux par défaut), validé et normalisé à 2 décimales ; 400 si non autorisé. */
+    public static BigDecimal tauxTva(BigDecimal saisi) {
+        BigDecimal taux = (saisi != null ? saisi : TAUX_TVA_PAR_DEFAUT).setScale(2, RoundingMode.HALF_UP);
+        if (!TAUX_TVA.contains(taux)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Taux de TVA invalide : " + saisi + " (autorisés : 0, 5.5, 10, 20)");
+        }
+        return taux;
     }
 
     public static BigDecimal arrondi(BigDecimal montant) {
