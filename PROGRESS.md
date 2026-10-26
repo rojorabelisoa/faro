@@ -21,7 +21,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 ## En cours
 
-- 2.3 Lignes de devis + synthèses (backend : migration `V4`, package `com.faro.devis`).
+- 2.4 Bibliothèque d'ouvrages (backend : migration `V5`, package `com.faro.bibliotheque`).
 - En parallèle : entretien métier non terminé (questions de suivi dans `docs/brainstorm.md`). L'utilisateur a demandé de commencer sans attendre.
 
 ## À faire
@@ -39,7 +39,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - [ ] Phase 2 : MVP « devis pièces × lots » (cible : entreprises de rénovation, voir `docs/brainstorm.md`)
   - [x] 2.1 Backend : organisation (entreprise) créée à la première connexion, affaires (CRUD) cloisonnées par organisation
   - [x] 2.2 Backend : pièces d'une affaire (nom, surface) et lots de l'organisation (liste par défaut créée avec l'organisation)
-  - [ ] 2.3 Backend : lignes de devis (pièce × lot, désignation, unité, quantité, PU HT, TVA) + synthèses par pièce et par lot (HT, TVA, TTC)
+  - [x] 2.3 Backend : lignes de devis (pièce × lot, désignation, unité, quantité, PU HT, TVA) + synthèses par pièce et par lot (HT, TVA, TTC)
   - [ ] 2.4 Backend : bibliothèque d'ouvrages de l'organisation, ajout d'une ligne depuis la bibliothèque
   - [ ] 2.5 Frontend : liste et création des affaires
   - [ ] 2.6 Frontend : écran affaire avec pièces, lignes de devis, bascule vue par pièce / vue par lot, totaux
@@ -71,6 +71,9 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Contrôleurs : paramètre `@CurrentOrganisation Organisation` (résolu par `CurrentOrganisationResolver`) pour cloisonner les données.
 - Les 14 lots par défaut (`LotService.LOTS_PAR_DEFAUT`) sont créés via `OrganisationCreatedEvent` à la création d'une organisation. API `/api/lots` ; code de lot unique par organisation (409 sinon).
 - Pièces : `/api/affaires/{id}/pieces`, supprimées en cascade avec l'affaire (`ON DELETE CASCADE`).
+- Devis : `GET /api/affaires/{id}/devis` renvoie lignes + totaux par pièce (« Général » pour les lignes sans pièce, toutes les pièces même à 0), par lot (lots utilisés), par taux de TVA, HT/TVA/TTC. Lignes : `POST/PUT/DELETE /api/affaires/{id}/lignes`.
+- Calculs (`Montants`) : montant HT ligne = quantité × PU arrondi au centime (demi supérieur) ; TVA calculée par taux sur la base HT cumulée ; taux autorisés 0 / 5,5 / 10 / 20, 10 % par défaut. PU négatif autorisé (remises).
+- Supprimer une pièce ou un lot utilisé par des lignes → 409 (`ApiExceptionHandler`).
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions

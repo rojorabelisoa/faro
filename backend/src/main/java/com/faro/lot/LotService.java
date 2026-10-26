@@ -81,6 +81,8 @@ public class LotService {
 
     public void delete(Organisation organisation, UUID id) {
         repository.delete(get(organisation, id));
+        // flush : une contrainte violée (lignes de devis liées) remonte ici en 409.
+        repository.flush();
     }
 
     private void checkCodeIsFree(Organisation organisation, String code) {

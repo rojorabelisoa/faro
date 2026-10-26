@@ -53,5 +53,7 @@ public class PieceService {
 
     public void delete(Organisation organisation, UUID affaireId, UUID id) {
         repository.delete(get(organisation, affaireId, id));
+        // flush : une contrainte violée (lignes de devis liées) remonte ici en 409.
+        repository.flush();
     }
 }
