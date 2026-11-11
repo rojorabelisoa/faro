@@ -1,0 +1,85 @@
+# Production : un seul serveur avec Docker. Voir docs/deploiement.md.
+# Variables dans deploy/.env (copier .env.example).
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: faro
+      POSTGRES_USER: faro
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?mot de passe PostgreSQL requis}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?mot de passe base Keycloak requis}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U faro -d faro"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    image: keycloak/keycloak:26.3
+    restart: unless-stopped
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_HOSTNAME: https://${AUTH_DOMAINE}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?mot de passe admin Keycloak requis}
+      FARO_URL: https://${FARO_DOMAINE}
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    environment:
+      FARO_DB_URL: jdbc:postgresql://postgres:5432/faro
+      FARO_DB_USER: faro
+      FARO_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      FARO_OIDC_ISSUER_URI: https://${AUTH_DOMAINE}/realms/faro
+      # Clés de signature lues directement sur le réseau interne ; l'émetteur reste vérifié.
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/faro/protocol/openid-connect/certs
+      FARO_CORS_ALLOWED_ORIGINS: https://${FARO_DOMAINE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        VITE_OIDC_AUTHORITY: https://${AUTH_DOMAINE}/realms/faro
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  # HTTPS automatique (Let's Encrypt) pour les deux domaines.
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      FARO_DOMAINE: ${FARO_DOMAINE:?domaine de l'application requis}
+      AUTH_DOMAINE: ${AUTH_DOMAINE:?domaine de connexion requis}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - frontend
+      - keycloak
+
+volumes:
+  postgres-data:
+  caddy-data:

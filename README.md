@@ -105,6 +105,10 @@ Frontend : voir `frontend/.env.example` (`VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIEN
 
 Pour utiliser un autre fournisseur OIDC (Google, Entra ID, Auth0…), changer l'issuer et le client ID ; le fournisseur doit émettre un jeton d'accès JWT avec l'audience attendue et, pour les rôles, une claim `roles`.
 
+## Mise en production
+
+Voir [`docs/deploiement.md`](docs/deploiement.md) : un serveur, Docker, deux noms de domaine, HTTPS automatique.
+
 ## Suivi du projet
 
 L'avancement est suivi dans [`PROGRESS.md`](PROGRESS.md) ; [`CLAUDE.md`](CLAUDE.md) explique à Claude comment reprendre le travail d'une session à l'autre.

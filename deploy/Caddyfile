@@ -1,0 +1,8 @@
+{$FARO_DOMAINE} {
+	encode gzip
+	reverse_proxy frontend:80
+}
+
+{$AUTH_DOMAINE} {
+	reverse_proxy keycloak:8080
+}
