@@ -68,7 +68,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [ ] 18. Déploiement : Dockerfiles + compose de production + doc (mise en ligne réelle bloquée : hébergeur et comptes à choisir)
   - [ ] 19. Abonnements / facturation (bloqué : compte Stripe ou autre à créer ; au plus, modèle de plans)
   - [x] 20. CI sur toutes les branches (push sur toute branche + PR ; backend via `./mvnw`)
-  - [ ] 21. Tester `docker-compose.yml` de bout en bout (Docker disponible dans la session cloud depuis le 2026-11-11 : `dockerd &`)
+  - [x] 21. `docker-compose.yml` testé de bout en bout (image Keycloak prise sur Docker Hub, quay.io étant bloqué dans la session cloud) : connexion + scénario devis Playwright OK
   - [x] 22. Protection serveur contre la double création d'utilisateur à la première connexion (verrou `pg_advisory_xact_lock` par subject, test de concurrence à 8 threads)
   - [ ] 23. Plus tard (business plan) : module investisseur (rentabilité, TRI), achats / bons de commande, IA (bloquée : clé API)
 
@@ -85,7 +85,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Audience attendue dans le jeton : `faro-api` (mapper d'audience Keycloak sur le client `faro-frontend`).
 - Keycloak écoute sur le port 8180, le backend sur 8080, le frontend sur 5173.
 - Frontend : React 19, Vite 8, TypeScript 7, tests Vitest + Testing Library. Config OIDC via `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, `VITE_API_URL` (voir `frontend/.env.example`). Jetons stockés en `sessionStorage`.
-- Dans une session cloud sans Docker : Keycloak peut être lancé depuis le zip officiel (`bin/kc.sh start-dev --import-realm --http-port=8180`) et PostgreSQL 16 est installé localement (`service postgresql start`).
+- Session cloud : Docker est disponible (`dockerd &` puis `docker compose up -d`, après `service postgresql stop` pour libérer le port 5432 ; les tests backend tournent alors sur le PostgreSQL du compose, mêmes identifiants). Sinon : Keycloak peut être lancé depuis le zip officiel (`bin/kc.sh start-dev --import-realm --http-port=8180`) et PostgreSQL 16 est installé localement (`service postgresql start`).
 - Les tests backend sont des tests d'intégration sur un vrai PostgreSQL (base `faro`, utilisateur `faro/faro`), pas de Docker requis pour les tests.
 
 - Vocabulaire métier en français dans le code du domaine (`Affaire`, `Piece`, `Lot`, `LigneDevis`), pour coller au langage de la chargée d'études.
