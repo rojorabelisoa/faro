@@ -135,3 +135,12 @@ label.en-ligne { display: flex; }
   .devis thead { display: none; }
   .tableau { display: block; overflow-x: auto; }
 }
+
+.section-visite { margin-bottom: 1rem; }
+.section-visite h3 { margin-bottom: 0.4rem; }
+.notes-visite { margin: 0 0 0.5rem; padding-left: 1.2rem; }
+.notes-visite li { white-space: pre-wrap; margin-bottom: 0.25rem; }
+.photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0.5rem; }
+.vignette { margin: 0; }
+.vignette img, .vignette-vide { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: var(--bord); display: block; }
+.vignette figcaption { font-size: 0.8rem; color: var(--discret); display: flex; justify-content: space-between; gap: 0.25rem; }

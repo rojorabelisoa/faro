@@ -51,6 +51,7 @@ function renderPage() {
     devis: vi.fn().mockResolvedValue(DEVIS),
     ouvrages: vi.fn().mockResolvedValue([]),
     createLigne: vi.fn().mockResolvedValue({}),
+    visite: vi.fn().mockResolvedValue({ observations: [], photos: [] }),
   }
   const me = { id: '1', subject: 's', email: null, displayName: 'Demo', roles: [], organisation: { id: 'o', nom: 'X' } }
   render(

@@ -8,6 +8,11 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  servlet:
+    multipart:
+      # Photos de visite (réduites par le navigateur avant envoi) et fichiers CSV.
+      max-file-size: 10MB
+      max-request-size: 12MB
   jpa:
     open-in-view: false
     hibernate:

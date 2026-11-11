@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router'
 import type { Affaire, Devis, Ligne, LigneInput, Lot, Ouvrage, Piece, PieceInput, StatutAffaire } from '../api'
 import { useSession } from '../ApiContext'
 import FormulaireAffaire from '../components/FormulaireAffaire'
+import { nomFichier, telecharger } from '../components/telecharger'
+import Visite from '../components/Visite'
 import {
   formatEuros, formatNombre, formatTaux, LIBELLES_STATUT, LIBELLES_TYPE_BIEN, parseNombre, TAUX_TVA, UNITES,
 } from '../format'
@@ -63,13 +65,8 @@ export default function AffairePage() {
   async function telechargerPdf(vue: 'PIECE' | 'LOT') {
     if (!affaire) return
     await run(async () => {
-      const blob = await api.devisPdf(affaire.id, vue)
-      const url = URL.createObjectURL(blob)
-      const lien = document.createElement('a')
-      lien.href = url
-      lien.download = `devis-${affaire.nom.replace(/[^\p{L}\p{N}]+/gu, '-')}-${vue === 'PIECE' ? 'client' : 'chantier'}.pdf`
-      lien.click()
-      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      telecharger(await api.devisPdf(affaire.id, vue),
+        `devis-${nomFichier(affaire.nom)}-${vue === 'PIECE' ? 'client' : 'chantier'}.pdf`)
     })
   }
 
@@ -133,6 +130,8 @@ export default function AffairePage() {
           await reload()
         })}
       />
+
+      <Visite affaire={affaire} pieces={pieces} />
 
       <section className="carte">
         <div className="titre-section">

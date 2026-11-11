@@ -122,6 +122,28 @@ export interface Ouvrage {
 
 export type OuvrageInput = Omit<Ouvrage, 'id'>
 
+export interface Observation {
+  id: string
+  pieceId: string | null
+  texte: string
+  auteur: string | null
+  createdAt: string
+}
+
+export interface PhotoInfo {
+  id: string
+  pieceId: string | null
+  legende: string | null
+  contentType: string
+  taille: number
+  createdAt: string
+}
+
+export interface Visite {
+  observations: Observation[]
+  photos: PhotoInfo[]
+}
+
 export interface ImportResultat {
   importes: number
   misAJour: number
@@ -165,6 +187,23 @@ async function download(token: string, path: string): Promise<Blob> {
 }
 
 /** Import tout-ou-rien : la réponse (200 ou 400) détaille les erreurs ligne par ligne. */
+async function upload<T>(token: string, path: string, form: FormData): Promise<T> {
+  const response = await fetch(`${apiUrl}${path}`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
+  })
+  if (!response.ok) {
+    let message = `Erreur API ${response.status}`
+    try {
+      const problem = await response.json()
+      if (problem?.detail) message = problem.detail
+    } catch {
+      // corps vide ou non JSON
+    }
+    throw new ApiError(response.status, message)
+  }
+  return response.json()
+}
+
 async function importCsv(token: string, fichier: File): Promise<ImportResultat> {
   const form = new FormData()
   form.append('fichier', fichier)
@@ -221,6 +260,23 @@ export function createApi(token: string) {
     createOuvrage: (input: OuvrageInput) => request<Ouvrage>(token, '/api/ouvrages', json('POST', input)),
     updateOuvrage: (id: string, input: OuvrageInput) =>
       request<Ouvrage>(token, `/api/ouvrages/${id}`, json('PUT', input)),
+    visite: (affaireId: string) => request<Visite>(token, `/api/affaires/${affaireId}/visite`),
+    visitePdf: (affaireId: string) => download(token, `/api/affaires/${affaireId}/visite.pdf`),
+    addObservation: (affaireId: string, input: { pieceId: string | null; texte: string }) =>
+      request<Observation>(token, `/api/affaires/${affaireId}/observations`, json('POST', input)),
+    deleteObservation: (affaireId: string, id: string) =>
+      request<void>(token, `/api/affaires/${affaireId}/observations/${id}`, { method: 'DELETE' }),
+    addPhoto: (affaireId: string, fichier: Blob, pieceId: string | null, legende: string) => {
+      const form = new FormData()
+      form.append('fichier', fichier, 'photo.jpg')
+      if (pieceId) form.append('pieceId', pieceId)
+      if (legende) form.append('legende', legende)
+      return upload<PhotoInfo>(token, `/api/affaires/${affaireId}/photos`, form)
+    },
+    photo: (affaireId: string, id: string) => download(token, `/api/affaires/${affaireId}/photos/${id}`),
+    deletePhoto: (affaireId: string, id: string) =>
+      request<void>(token, `/api/affaires/${affaireId}/photos/${id}`, { method: 'DELETE' }),
+
     exportOuvrages: () => download(token, '/api/ouvrages/export.csv'),
     importOuvrages: (fichier: File) => importCsv(token, fichier),
     deleteOuvrage: (id: string) => request<void>(token, `/api/ouvrages/${id}`, { method: 'DELETE' }),
