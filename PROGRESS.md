@@ -58,7 +58,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 8. Import / export CSV de la bibliothèque (`POST /api/ouvrages/import`, `GET /api/ouvrages/export.csv`) : CSV Excel FR (`;`, UTF-8 ou Windows-1252, « 72,40 € »), en-têtes souples, tout-ou-rien avec erreurs par ligne, réimport = mise à jour des prix (même lot + désignation). Format ProGBat : à confirmer avec un exemple
   - [x] 9. CR de visite : observations et photos par pièce (migration V7, photos en base `bytea`, réduites à 1600 px JPEG par le navigateur, `capture` caméra sur mobile), PDF du compte-rendu (`GET /api/affaires/{id}/visite.pdf`) avec photos et métrés
   - [x] 10. Estimation rapide en fourchette : type de pièce + niveau de travaux sur la pièce (type deviné depuis le nom), ratios €/m² min/max par organisation (migration V8, 24 ratios INDICATIFS à faire valider par la chargée d'études), page `/ratios` avec €/m² constatés dans les devis (médiane), comparaison estimation / devis détaillé
-  - [ ] 11. Options Eco / Standard / Premium (gamme par ligne, choix par pièce, comparaison des totaux)
+  - [x] 11. Options Eco / Standard / Premium : gamme facultative par ligne (null = commune), gamme choisie par pièce et par affaire pour les lignes générales (migration V9, `PUT .../pieces/{id}/gamme`, `PUT /api/affaires/{id}/gamme`), totaux / TVA / PDF / vue par lot sur les lignes retenues, prix de chaque gamme par pièce et comparatif global
   - [ ] 12. Versions figées du devis et passage au chantier (dossier travaux transmis au conducteur)
   - [ ] 13. Travaux supplémentaires / avenants : chiffrage, validation client, historique opposable
   - [ ] 14. Marge prévue (déboursé sec) vs réelle (dépenses saisies), par lot
@@ -105,6 +105,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - `Montants` est dans `com.faro.common` ; `Montants.tauxTva(saisi)` valide et normalise le taux (400 si invalide).
 - Frontend : React Router 7 (`/`, `/affaires/:id`, `/bibliotheque`), client API typé `createApi(token)` dans `src/api.ts`, session (api + me) via `SessionContext`. Saisie des nombres à la française (« 4,25 »). Le regroupement par pièce / par lot se fait côté front à partir de `GET /devis`.
 - Ordre des lignes : choisi par l'utilisateur (champ `ordre`), utilisé tel quel dans les deux vues (pièce et lot) ; plus de tri automatique par lot dans la vue par pièce.
+- Gammes : une ligne est « incluse » si elle est commune ou de la gamme retenue de sa pièce (ou de l'affaire si générale). Tous les totaux, la TVA, le PDF, la vue par lot et les €/m² constatés ne comptent que les lignes incluses.
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions

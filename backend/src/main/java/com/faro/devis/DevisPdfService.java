@@ -136,7 +136,7 @@ public class DevisPdfService {
         List<Groupe> groupes = new ArrayList<>();
         if (vue == Vue.PIECE) {
             for (DevisResponse.TotalPiece piece : devis.parPiece()) {
-                List<LigneResponse> lignes = devis.lignes().stream()
+                List<LigneResponse> lignes = devis.lignes().stream().filter(LigneResponse::incluse)
                     .filter(l -> Objects.equals(l.pieceId(), piece.pieceId())).toList();
                 if (!lignes.isEmpty()) {
                     groupes.add(new Groupe(piece.nom(), piece.totalHt(), lignes));
@@ -145,7 +145,8 @@ public class DevisPdfService {
         } else {
             for (DevisResponse.TotalLot lot : devis.parLot()) {
                 groupes.add(new Groupe(lot.code() + " · " + lot.nom(), lot.totalHt(),
-                    devis.lignes().stream().filter(l -> l.lotId().equals(lot.lotId())).toList()));
+                    devis.lignes().stream().filter(LigneResponse::incluse)
+                        .filter(l -> l.lotId().equals(lot.lotId())).toList()));
             }
         }
         return groupes;

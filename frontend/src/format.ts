@@ -60,3 +60,9 @@ export function devinerTypePiece(nom: string): string | null {
   if (/buanderie|cellier|cave|dressing/.test(n)) return 'BUANDERIE_CELLIER'
   return null
 }
+
+export const LIBELLES_GAMME: Record<string, string> = {
+  ECO: 'Eco',
+  STANDARD: 'Standard',
+  PREMIUM: 'Premium',
+}

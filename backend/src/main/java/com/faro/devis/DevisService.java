@@ -55,18 +55,25 @@ public class DevisService {
         Affaire affaire = affaireService.get(organisation, affaireId);
         List<LigneDevis> lignes = repository.findByAffaireIdOrderByOrdreAsc(affaire.getId());
         List<Piece> pieces = pieceService.list(organisation, affaireId);
+        // Les totaux ne comptent que les lignes communes et celles de la gamme retenue.
+        List<LigneDevis> incluses = lignes.stream().filter(LigneDevis::isIncluse).toList();
 
         List<TotalPiece> parPiece = new ArrayList<>();
-        BigDecimal general = totalHt(lignes.stream().filter(l -> l.getPiece() == null).toList());
-        if (general.signum() != 0) {
-            parPiece.add(new TotalPiece(null, NOM_LIGNES_GENERALES, general));
+        List<LigneDevis> generales = lignes.stream().filter(l -> l.getPiece() == null).toList();
+        if (!generales.isEmpty()) {
+            parPiece.add(new TotalPiece(null, NOM_LIGNES_GENERALES,
+                totalHt(generales.stream().filter(LigneDevis::isIncluse).toList()),
+                affaire.getGammeChoisie(), totauxParGamme(generales)));
         }
         for (Piece piece : pieces) {
-            parPiece.add(new TotalPiece(piece.getId(), piece.getNom(), totalHt(lignes.stream()
-                .filter(l -> l.getPiece() != null && l.getPiece().getId().equals(piece.getId())).toList())));
+            List<LigneDevis> lignesPiece = lignes.stream()
+                .filter(l -> l.getPiece() != null && l.getPiece().getId().equals(piece.getId())).toList();
+            parPiece.add(new TotalPiece(piece.getId(), piece.getNom(),
+                totalHt(lignesPiece.stream().filter(LigneDevis::isIncluse).toList()),
+                piece.getGammeChoisie(), totauxParGamme(lignesPiece)));
         }
 
-        Map<Lot, List<LigneDevis>> lignesParLot = lignes.stream().collect(Collectors.groupingBy(
+        Map<Lot, List<LigneDevis>> lignesParLot = incluses.stream().collect(Collectors.groupingBy(
             LigneDevis::getLot, LinkedHashMap::new, Collectors.toList()));
         List<TotalLot> parLot = lignesParLot.entrySet().stream()
             .sorted(Comparator.comparing((Map.Entry<Lot, List<LigneDevis>> e) -> e.getKey().getOrdre())
@@ -75,17 +82,41 @@ public class DevisService {
             .toList();
 
         Map<BigDecimal, BigDecimal> baseParTaux = new TreeMap<>();
-        for (LigneDevis ligne : lignes) {
+        for (LigneDevis ligne : incluses) {
             baseParTaux.merge(ligne.getTauxTva(), ligne.getMontantHt(), BigDecimal::add);
         }
         List<TotalTva> tva = baseParTaux.entrySet().stream()
             .map(e -> new TotalTva(e.getKey(), e.getValue(), Montants.tva(e.getValue(), e.getKey())))
             .toList();
 
-        BigDecimal totalHt = totalHt(lignes);
+        BigDecimal totalHt = totalHt(incluses);
         BigDecimal totalTva = tva.stream().map(TotalTva::montant).reduce(BigDecimal.ZERO, BigDecimal::add);
         return new DevisResponse(lignes.stream().map(LigneResponse::from).toList(), parPiece, parLot, tva,
-            totalHt, Montants.arrondi(totalTva), Montants.arrondi(totalHt.add(totalTva)));
+            totalHt, Montants.arrondi(totalTva), Montants.arrondi(totalHt.add(totalTva)), totauxParGamme(lignes));
+    }
+
+    /**
+     * Total HT des lignes si la gamme g était retenue partout (lignes communes + lignes de g),
+     * pour comparer les options. Null s'il n'y a aucune ligne d'option.
+     */
+    static Map<Gamme, BigDecimal> totauxParGamme(List<LigneDevis> lignes) {
+        if (lignes.stream().noneMatch(l -> l.getGamme() != null)) {
+            return null;
+        }
+        Map<Gamme, BigDecimal> totaux = new java.util.EnumMap<>(Gamme.class);
+        for (Gamme gamme : Gamme.values()) {
+            totaux.put(gamme, totalHt(lignes.stream().filter(l -> l.getGamme() == null || l.getGamme() == gamme).toList()));
+        }
+        return totaux;
+    }
+
+    /** Gamme retenue pour une pièce, ou pour les lignes générales de l'affaire si pieceId est null. */
+    public void choisirGamme(Organisation organisation, UUID affaireId, UUID pieceId, Gamme gamme) {
+        if (pieceId == null) {
+            affaireService.get(organisation, affaireId).setGammeChoisie(gamme);
+        } else {
+            pieceService.get(organisation, affaireId, pieceId).setGammeChoisie(gamme);
+        }
     }
 
     public LigneDevis create(Organisation organisation, UUID affaireId, LigneDevisRequest request) {
@@ -157,6 +188,7 @@ public class DevisService {
 
     private void apply(Organisation organisation, UUID affaireId, LigneDevis ligne, LigneDevisRequest request) {
         ligne.setTauxTva(Montants.tauxTva(request.tauxTva()));
+        ligne.setGamme(request.gamme());
         ligne.setPiece(piece(organisation, affaireId, request.pieceId()));
         ligne.setLot(lotService.get(organisation, request.lotId()));
         ligne.setDesignation(request.designation());

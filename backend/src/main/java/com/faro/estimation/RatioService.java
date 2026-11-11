@@ -100,7 +100,8 @@ public class RatioService {
             FROM piece p
             JOIN affaire a ON a.id = p.affaire_id
             JOIN ligne_devis l ON l.piece_id = p.id
-            WHERE a.organisation_id = ? AND p.type_piece IS NOT NULL AND p.niveau_travaux IS NOT NULL
+            WHERE a.organisation_id = ? AND (l.gamme IS NULL OR l.gamme = p.gamme_choisie)
+              AND p.type_piece IS NOT NULL AND p.niveau_travaux IS NOT NULL
               AND p.surface_m2 > 0
             GROUP BY p.id, p.type_piece, p.niveau_travaux, p.surface_m2
             HAVING SUM(ROUND(l.quantite * l.prix_unitaire_ht, 2)) > 0

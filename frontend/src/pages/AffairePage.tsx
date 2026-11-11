@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type {
-  Affaire, Devis, Ligne, LigneInput, Lot, NiveauTravaux, Ouvrage, Piece, PieceInput, StatutAffaire, TypePiece,
+  Affaire, Devis, Gamme, Ligne, LigneInput, Lot, NiveauTravaux, Ouvrage, Piece, PieceInput, StatutAffaire, TypePiece,
 } from '../api'
 import { useSession } from '../ApiContext'
 import FormulaireAffaire from '../components/FormulaireAffaire'
 import { nomFichier, telecharger } from '../components/telecharger'
 import Visite from '../components/Visite'
 import {
-  devinerTypePiece, formatEuros, formatNombre, formatTaux, LIBELLES_NIVEAU, LIBELLES_STATUT, LIBELLES_TYPE_BIEN,
+  devinerTypePiece, formatEuros, formatNombre, formatTaux, LIBELLES_GAMME, LIBELLES_NIVEAU, LIBELLES_STATUT, LIBELLES_TYPE_BIEN,
   LIBELLES_TYPE_PIECE, parseNombre, TAUX_TVA, UNITES,
 } from '../format'
 import Estimation from '../components/Estimation'
@@ -158,6 +158,10 @@ export default function AffairePage() {
           lots={lots}
           vue={vue}
           onEdit={setEdition}
+          onChoisirGamme={(pieceId, gamme) => run(async () => {
+            await api.choisirGamme(affaire.id, pieceId, gamme)
+            await reload()
+          })}
           onMove={(ids) => run(async () => {
             await api.reorderLignes(affaire.id, ids)
             await reload()
@@ -342,6 +346,10 @@ interface Groupe {
   titre: string
   totalHt: number
   lignes: Ligne[]
+  /** Vue par pièce seulement : pièce (null = général), gamme retenue et prix de chaque gamme. */
+  pieceId?: string | null
+  gammeChoisie?: Gamme
+  gammes?: Record<Gamme, number> | null
 }
 
 /** Regroupe les mêmes lignes par pièce ou par lot : c'est la même donnée vue de deux façons. */
@@ -352,13 +360,17 @@ function grouper(devis: Devis, vue: Vue): Groupe[] {
       titre: total.nom,
       totalHt: total.totalHt,
       lignes: devis.lignes.filter((ligne) => ligne.pieceId === total.pieceId),
+      pieceId: total.pieceId,
+      gammeChoisie: total.gammeChoisie,
+      gammes: total.gammes,
     }))
   }
   return devis.parLot.map((total) => ({
     cle: total.lotId,
     titre: `${total.code} · ${total.nom}`,
     totalHt: total.totalHt,
-    lignes: devis.lignes.filter((ligne) => ligne.lotId === total.lotId),
+    // Pour le chantier, seules les lignes retenues comptent.
+    lignes: devis.lignes.filter((ligne) => ligne.lotId === total.lotId && ligne.incluse),
   }))
 }
 
@@ -374,13 +386,14 @@ export function deplacer(lignes: Ligne[], groupe: Ligne[], ligne: Ligne, sens: -
   return ids
 }
 
-function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onDelete, onSaveToLibrary }: {
+function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, onDelete, onSaveToLibrary }: {
   devis: Devis
   pieces: Piece[]
   lots: Lot[]
   vue: Vue
   onEdit: (ligne: Ligne) => void
   onMove: (ids: string[]) => Promise<boolean>
+  onChoisirGamme: (pieceId: string | null, gamme: Gamme) => Promise<boolean>
   onDelete: (ligne: Ligne) => Promise<boolean>
   onSaveToLibrary: (ligne: Ligne) => Promise<boolean>
 }) {
@@ -411,13 +424,26 @@ function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onDelete, onSave
       {grouper(devis, vue).map((groupe) => (
         <tbody key={groupe.cle}>
           <tr className="groupe">
-            <th colSpan={6}>{groupe.titre}</th>
+            <th colSpan={6}>
+              {groupe.titre}
+              {groupe.gammes && (
+                <span className="gammes" role="group" aria-label={`Gamme ${groupe.titre}`}>
+                  {(Object.keys(LIBELLES_GAMME) as Gamme[]).map((gamme) => (
+                    <button key={gamme} aria-pressed={groupe.gammeChoisie === gamme}
+                      onClick={() => void onChoisirGamme(groupe.pieceId ?? null, gamme)}>
+                      {LIBELLES_GAMME[gamme]} {formatEuros(groupe.gammes![gamme])}
+                    </button>
+                  ))}
+                </span>
+              )}
+            </th>
             <th className="nombre">{formatEuros(groupe.totalHt)}</th>
             <th />
           </tr>
           {groupe.lignes.map((ligne, index) => (
-            <tr key={ligne.id}>
+            <tr key={ligne.id} className={ligne.incluse ? undefined : 'non-incluse'}>
               <td>
+                {ligne.gamme && <span className={`badge-gamme gamme-${ligne.gamme}`}>{LIBELLES_GAMME[ligne.gamme]}</span>}
                 {ligne.designation}
                 {ligne.description && <div className="discret">{ligne.description}</div>}
               </td>
@@ -446,6 +472,15 @@ function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onDelete, onSave
         </tbody>
       ))}
       <tfoot>
+        {devis.totauxParGamme && (
+          <tr className="comparatif">
+            <th colSpan={8}>
+              Comparatif HT :{' '}
+              {(Object.keys(LIBELLES_GAMME) as Gamme[]).map((g) =>
+                `tout en ${LIBELLES_GAMME[g]} ${formatEuros(devis.totauxParGamme![g])}`).join(' · ')}
+            </th>
+          </tr>
+        )}
         <tr>
           <th colSpan={6}>Total HT</th>
           <td className="nombre">{formatEuros(devis.totalHt)}</td>
@@ -485,6 +520,7 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
   const [quantite, setQuantite] = useState(ligne ? String(ligne.quantite).replace('.', ',') : '')
   const [prix, setPrix] = useState(ligne ? String(ligne.prixUnitaireHt).replace('.', ',') : '')
   const [tauxTva, setTauxTva] = useState(ligne?.tauxTva ?? 10)
+  const [gamme, setGamme] = useState<string>(ligne?.gamme ?? '')
   const [recherche, setRecherche] = useState('')
   const [suggestions, setSuggestions] = useState<Ouvrage[]>([])
   const [invalide, setInvalide] = useState<string | null>(null)
@@ -513,7 +549,7 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
     setInvalide(null)
     const ok = await onSubmit({
       pieceId: piece, lotId, designation: designation.trim(), description: description.trim() || null,
-      unite, quantite: q, prixUnitaireHt: pu, tauxTva,
+      unite, quantite: q, prixUnitaireHt: pu, tauxTva, gamme: (gamme || null) as Gamme | null,
     })
     // On garde la pièce, le lot et la TVA pour enchaîner les lignes d'une même pièce.
     if (ok && !ligne) {
@@ -553,7 +589,7 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
           <input value={quantite} onChange={(e) => setQuantite(e.target.value)} inputMode="decimal" required />
         </label>
         {metres(pieces.find((p) => p.id === pieceId)).length > 0 && (
-          <div className="metres" role="group" aria-label="Quantités depuis les métrés">
+          <div className="metres" role="group" aria-label="Remplir depuis les métrés">
             {metres(pieces.find((p) => p.id === pieceId)).map((m) => (
               <button type="button" key={m.libelle}
                 onClick={() => { setQuantite(enTexte(m.quantite)); setUnite(m.unite) }}>
@@ -613,6 +649,13 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
           TVA
           <select value={tauxTva} onChange={(e) => setTauxTva(Number(e.target.value))}>
             {TAUX_TVA.map((t) => <option key={t} value={t}>{formatTaux(t)}</option>)}
+          </select>
+        </label>
+        <label>
+          Option
+          <select value={gamme} onChange={(e) => setGamme(e.target.value)}>
+            <option value="">Commune à toutes les gammes</option>
+            {Object.entries(LIBELLES_GAMME).map(([v, l]) => <option key={v} value={v}>Gamme {l}</option>)}
           </select>
         </label>
         <label className="pleine">

@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -57,6 +59,10 @@ public class LigneDevis {
 
     @Column(nullable = false)
     private String unite;
+
+    /** Null : ligne commune à toutes les gammes. */
+    @Enumerated(EnumType.STRING)
+    private Gamme gamme;
 
     @Column(nullable = false)
     private BigDecimal quantite;
@@ -141,6 +147,24 @@ public class LigneDevis {
 
     public void setUnite(String unite) {
         this.unite = unite;
+    }
+
+    public Gamme getGamme() {
+        return gamme;
+    }
+
+    public void setGamme(Gamme gamme) {
+        this.gamme = gamme;
+    }
+
+    /** Gamme retenue pour la pièce de la ligne (ou pour l'affaire si la ligne est générale). */
+    public Gamme getGammeRetenue() {
+        return piece != null ? piece.getGammeChoisie() : affaire.getGammeChoisie();
+    }
+
+    /** La ligne compte dans le devis si elle est commune ou de la gamme retenue. */
+    public boolean isIncluse() {
+        return gamme == null || gamme == getGammeRetenue();
     }
 
     public BigDecimal getQuantite() {

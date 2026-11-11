@@ -205,6 +205,65 @@ class DevisApiTest {
         return texte.toString();
     }
 
+    private ResultActions addLigneGamme(String pieceId, String designation, String prix, String gamme) throws Exception {
+        String piece = pieceId == null ? "null" : "\"" + pieceId + "\"";
+        return mockMvc.perform(post("/api/affaires/" + affaireId + "/lignes").with(user(SUB))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"pieceId\": %s, \"lotId\": \"%s\", \"designation\": \"%s\", \"unite\": \"U\", \"quantite\": 1, \"prixUnitaireHt\": %s, \"gamme\": %s}"
+                .formatted(piece, lots.get("10"), designation, prix, gamme == null ? "null" : "\"" + gamme + "\"")));
+    }
+
+    @Test
+    void onlyTheChosenGammeCountsAndEachGammeIsPriced() throws Exception {
+        addLigneGamme(sdb, "Dépose", "300", null).andExpect(status().isCreated());
+        addLigneGamme(sdb, "Carrelage 30x30", "500", "ECO").andExpect(status().isCreated());
+        addLigneGamme(sdb, "Carrelage 60x60", "800", "STANDARD")
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.incluse").value(true));
+        addLigneGamme(sdb, "Grès cérame grand format", "1400", "PREMIUM")
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.incluse").value(false));
+        addLigneGamme(cuisine, "Crédence", "200", null).andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/devis").with(user(SUB)))
+            .andExpect(jsonPath("$.totalHt").value(1300.00))
+            .andExpect(jsonPath("$.parPiece[1].gammeChoisie").value("STANDARD"))
+            .andExpect(jsonPath("$.parPiece[1].gammes.ECO").value(800.00))
+            .andExpect(jsonPath("$.parPiece[1].gammes.STANDARD").value(1100.00))
+            .andExpect(jsonPath("$.parPiece[1].gammes.PREMIUM").value(1700.00))
+            .andExpect(jsonPath("$.parPiece[0].gammes").doesNotExist())
+            .andExpect(jsonPath("$.totauxParGamme.PREMIUM").value(1900.00))
+            .andExpect(jsonPath("$.lignes[3].incluse").value(false));
+
+        mockMvc.perform(put("/api/affaires/" + affaireId + "/pieces/" + sdb + "/gamme").with(user(SUB))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"gamme\": \"PREMIUM\"}"))
+            .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/devis").with(user(SUB)))
+            .andExpect(jsonPath("$.totalHt").value(1900.00))
+            .andExpect(jsonPath("$.parLot[0].totalHt").value(1900.00))
+            .andExpect(jsonPath("$.lignes[3].incluse").value(true))
+            .andExpect(jsonPath("$.lignes[2].incluse").value(false));
+
+        String texte = texte(mockMvc.perform(get("/api/affaires/" + affaireId + "/devis.pdf").with(user(SUB)))
+            .andReturn().getResponse().getContentAsByteArray());
+        assertThat(texte).contains("Grès cérame grand format").doesNotContain("Carrelage 60x60");
+
+        // Lignes générales : gamme choisie au niveau de l'affaire.
+        addLigneGamme(null, "Protection Premium", "100", "PREMIUM").andExpect(status().isCreated());
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/devis").with(user(SUB)))
+            .andExpect(jsonPath("$.totalHt").value(1900.00));
+        mockMvc.perform(put("/api/affaires/" + affaireId + "/gamme").with(user(SUB))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"gamme\": \"PREMIUM\"}"))
+            .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/devis").with(user(SUB)))
+            .andExpect(jsonPath("$.totalHt").value(2000.00))
+            .andExpect(jsonPath("$.parPiece[0].gammeChoisie").value("PREMIUM"));
+
+        mockMvc.perform(put("/api/affaires/" + affaireId + "/pieces/" + sdb + "/gamme").with(user("devis-autre"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"gamme\": \"ECO\"}"))
+            .andExpect(status().isNotFound());
+    }
+
     @Test
     void rejectsInvalidLines() throws Exception {
         addLigne(cuisine, "07", "Évier", "U", "1", "420", "7").andExpect(status().isBadRequest());

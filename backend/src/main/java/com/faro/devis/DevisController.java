@@ -50,6 +50,21 @@ public class DevisController {
             .body(pdfService.pdf(organisation, affaireId, vue));
     }
 
+    /** Gamme retenue pour les lignes générales de l'affaire. */
+    @PutMapping("/gamme")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void gammeGenerale(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
+            @Valid @RequestBody GammeRequest request) {
+        devisService.choisirGamme(organisation, affaireId, null, request.gamme());
+    }
+
+    @PutMapping("/pieces/{pieceId}/gamme")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void gammePiece(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
+            @PathVariable UUID pieceId, @Valid @RequestBody GammeRequest request) {
+        devisService.choisirGamme(organisation, affaireId, pieceId, request.gamme());
+    }
+
     @PostMapping("/lignes")
     @ResponseStatus(HttpStatus.CREATED)
     public LigneResponse create(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,

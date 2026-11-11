@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
+import com.faro.devis.Gamme;
 import com.faro.organisation.Organisation;
 
 /** Un projet de rénovation pour un client, de la visite à la réception. */
@@ -54,6 +55,10 @@ public class Affaire {
     private StatutAffaire statut;
 
     private String notes;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gamme_choisie", nullable = false)
+    private Gamme gammeChoisie = Gamme.STANDARD;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -148,6 +153,14 @@ public class Affaire {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public Gamme getGammeChoisie() {
+        return gammeChoisie;
+    }
+
+    public void setGammeChoisie(Gamme gammeChoisie) {
+        this.gammeChoisie = gammeChoisie;
     }
 
     public Instant getCreatedAt() {

@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import type { Api, Devis, Piece } from '../api'
+import type { Api, Devis, Gamme, Piece } from '../api'
 import { SessionContext } from '../ApiContext'
 import AffairePage, { deplacer, metres } from './AffairePage'
 
@@ -15,9 +15,10 @@ const PIECES: Piece[] = [
   { id: 'cuisine', nom: 'Cuisine', surfaceM2: 12, perimetreMl: 14, hauteurM: 2.5, surfaceMursM2: 35, typePiece: 'CUISINE', niveauTravaux: 'RENOVATION', ordre: 1 },
   { id: 'sdb', nom: 'Salle de bains', surfaceM2: null, perimetreMl: null, hauteurM: null, surfaceMursM2: null, typePiece: null, niveauTravaux: null, ordre: 2 },
 ]
-const ligne = (id: string, pieceId: string | null, lotId: string, designation: string, montantHt: number) => ({
+const ligne = (id: string, pieceId: string | null, lotId: string, designation: string, montantHt: number,
+  gamme: Gamme | null = null, incluse = true) => ({
   id, pieceId, lotId, ouvrageId: null, designation, description: null, unite: 'U', quantite: 1,
-  prixUnitaireHt: montantHt, tauxTva: 10, montantHt, ordre: 1,
+  prixUnitaireHt: montantHt, tauxTva: 10, montantHt, gamme, incluse, ordre: 1,
 })
 const DEVIS: Devis = {
   lignes: [
@@ -27,9 +28,9 @@ const DEVIS: Devis = {
     ligne('4', 'sdb', 'l10', 'Carrelage sol', 307.7),
   ],
   parPiece: [
-    { pieceId: null, nom: 'Général', totalHt: 350 },
-    { pieceId: 'cuisine', nom: 'Cuisine', totalHt: 972.5 },
-    { pieceId: 'sdb', nom: 'Salle de bains', totalHt: 307.7 },
+    { pieceId: null, nom: 'Général', totalHt: 350, gammeChoisie: 'STANDARD', gammes: null },
+    { pieceId: 'cuisine', nom: 'Cuisine', totalHt: 972.5, gammeChoisie: 'STANDARD', gammes: null },
+    { pieceId: 'sdb', nom: 'Salle de bains', totalHt: 307.7, gammeChoisie: 'STANDARD', gammes: null },
   ],
   parLot: [
     { lotId: 'l01', code: '01', nom: 'Installation de chantier', totalHt: 350 },
@@ -40,15 +41,17 @@ const DEVIS: Devis = {
   totalHt: 1630.2,
   totalTva: 163.02,
   totalTtc: 1793.22,
+  totauxParGamme: null,
 }
 
-function renderPage() {
+function renderPage(devis: Devis = DEVIS) {
   const api = {
     affaire: vi.fn().mockResolvedValue({ id: 'a1', nom: 'T3 Lyon', clientNom: 'M. Martin', adresse: null,
       typeBien: 'APPARTEMENT', statut: 'ESTIMATION' }),
     pieces: vi.fn().mockResolvedValue(PIECES),
     lots: vi.fn().mockResolvedValue(LOTS),
-    devis: vi.fn().mockResolvedValue(DEVIS),
+    devis: vi.fn().mockResolvedValue(devis),
+    choisirGamme: vi.fn().mockResolvedValue(undefined),
     ouvrages: vi.fn().mockResolvedValue([]),
     createLigne: vi.fn().mockResolvedValue({}),
     visite: vi.fn().mockResolvedValue({ observations: [], photos: [] }),
@@ -111,7 +114,7 @@ describe('AffairePage', () => {
 
     expect(api.createLigne).toHaveBeenCalledWith('a1', {
       pieceId: 'sdb', lotId: 'l10', designation: 'Carrelage mural', description: null, unite: 'm²', quantite: 4.25,
-      prixUnitaireHt: 72.4, tauxTva: 10,
+      prixUnitaireHt: 72.4, tauxTva: 10, gamme: null,
     })
   })
 })
@@ -154,5 +157,30 @@ describe('AffairePage – estimation', () => {
     expect(texte(estimation.querySelector('.fourchette')?.textContent ?? null)).toBe('8 400,00 € – 15 600,00 € HT')
     expect(within(estimation).getByText('surface manquante')).toBeInTheDocument()
     expect(within(estimation).getByText(/hors de la fourchette/)).toBeInTheDocument()
+  })
+})
+
+describe('AffairePage – gammes', () => {
+  it('montre le prix de chaque gamme, grise les options non retenues et change de gamme', async () => {
+    const avecOptions: Devis = {
+      ...DEVIS,
+      lignes: [
+        ligne('a', 'sdb', 'l10', 'Carrelage 30x30', 500, 'ECO', false),
+        ligne('b', 'sdb', 'l10', 'Carrelage 60x60', 800, 'STANDARD', true),
+        ligne('c', 'sdb', 'l10', 'Grand format', 1400, 'PREMIUM', false),
+      ],
+      parPiece: [{ pieceId: 'sdb', nom: 'Salle de bains', totalHt: 800, gammeChoisie: 'STANDARD',
+        gammes: { ECO: 500, STANDARD: 800, PREMIUM: 1400 } }],
+      totauxParGamme: { ECO: 500, STANDARD: 800, PREMIUM: 1400 },
+    }
+    const api = renderPage(avecOptions)
+
+    const choix = await screen.findByRole('group', { name: 'Gamme Salle de bains' })
+    expect(within(choix).getByRole('button', { name: /Standard/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Grand format').closest('tr')).toHaveClass('non-incluse')
+    expect(screen.getByText('Carrelage 60x60').closest('tr')).not.toHaveClass('non-incluse')
+
+    await userEvent.click(within(choix).getByRole('button', { name: /Premium/ }))
+    expect(api.choisirGamme).toHaveBeenCalledWith('a1', 'sdb', 'PREMIUM')
   })
 })

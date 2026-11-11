@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
+ * gamme null = ligne commune à toutes les gammes (Eco / Standard / Premium).
  * pieceId null = ligne générale. tauxTva null = taux par défaut (10 %).
  * Ordre facultatif : à la création, la ligne est placée en dernier.
  */
@@ -22,5 +23,6 @@ public record LigneDevisRequest(
         @NotNull @DecimalMin("0") @Digits(integer = 9, fraction = 3) BigDecimal quantite,
         @NotNull @Digits(integer = 10, fraction = 2) BigDecimal prixUnitaireHt,
         BigDecimal tauxTva,
+        Gamme gamme,
         Integer ordre) {
 }

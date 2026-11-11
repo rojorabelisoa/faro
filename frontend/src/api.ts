@@ -107,6 +107,8 @@ export interface Lot {
   ordre: number
 }
 
+export type Gamme = 'ECO' | 'STANDARD' | 'PREMIUM'
+
 export interface Ligne {
   id: string
   pieceId: string | null
@@ -119,6 +121,10 @@ export interface Ligne {
   prixUnitaireHt: number
   tauxTva: number
   montantHt: number
+  /** null : ligne commune à toutes les gammes. */
+  gamme: Gamme | null
+  /** false : option d'une gamme non retenue, hors totaux. */
+  incluse: boolean
   ordre: number
 }
 
@@ -131,16 +137,25 @@ export interface LigneInput {
   quantite: number
   prixUnitaireHt: number
   tauxTva: number
+  gamme?: Gamme | null
 }
 
 export interface Devis {
   lignes: Ligne[]
-  parPiece: { pieceId: string | null; nom: string; totalHt: number }[]
+  parPiece: {
+    pieceId: string | null
+    nom: string
+    totalHt: number
+    gammeChoisie: Gamme
+    /** Total HT de la pièce pour chaque gamme ; null si elle n'a pas de ligne d'option. */
+    gammes: Record<Gamme, number> | null
+  }[]
   parLot: { lotId: string; code: string; nom: string; totalHt: number }[]
   tva: { taux: number; baseHt: number; montant: number }[]
   totalHt: number
   totalTva: number
   totalTtc: number
+  totauxParGamme: Record<Gamme, number> | null
 }
 
 export interface Ouvrage {
@@ -283,6 +298,9 @@ export function createApi(token: string) {
       request<Ligne>(token, `/api/affaires/${affaireId}/lignes/depuis-ouvrage`, json('POST', input)),
     updateLigne: (affaireId: string, id: string, input: LigneInput) =>
       request<Ligne>(token, `/api/affaires/${affaireId}/lignes/${id}`, json('PUT', input)),
+    choisirGamme: (affaireId: string, pieceId: string | null, gamme: Gamme) =>
+      request<void>(token, pieceId ? `/api/affaires/${affaireId}/pieces/${pieceId}/gamme` : `/api/affaires/${affaireId}/gamme`,
+        json('PUT', { gamme })),
     reorderLignes: (affaireId: string, ids: string[]) =>
       request<void>(token, `/api/affaires/${affaireId}/lignes/ordre`, json('PUT', { ids })),
     deleteLigne: (affaireId: string, id: string) =>

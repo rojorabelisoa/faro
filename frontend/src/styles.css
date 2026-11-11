@@ -151,3 +151,14 @@ label.en-ligne { display: flex; }
 .avertissement { color: #b54708; }
 @media (prefers-color-scheme: dark) { .avertissement { color: #fdb022; } }
 .formulaire-piece .en-ligne select { max-width: 11rem; }
+
+.gammes { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; margin-left: 0.75rem; font-weight: 400; }
+.gammes button { font-size: 0.8rem; padding: 0.15rem 0.5rem; }
+.gammes button[aria-pressed='true'] { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
+.badge-gamme { font-size: 0.7rem; padding: 0.05rem 0.4rem; border-radius: 999px; margin-right: 0.4rem; border: 1px solid var(--bord); vertical-align: middle; }
+.gamme-ECO { background: #ecfdf3; color: #067647; }
+.gamme-STANDARD { background: var(--accent-doux); color: var(--accent); }
+.gamme-PREMIUM { background: #fef0c7; color: #93370d; }
+.devis tr.non-incluse td:not(.actions-ligne) { color: var(--discret); opacity: 0.55; }
+.devis tr.non-incluse td.nombre { text-decoration: line-through; }
+.devis tr.comparatif th { font-weight: 400; color: var(--discret); text-align: left; }

@@ -15,6 +15,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.faro.devis.Gamme;
+
 /** Pièce (zone) d'une affaire : la façon dont le client voit son projet. */
 @Entity
 @Table(name = "piece")
@@ -47,6 +49,10 @@ public class Piece {
     @Enumerated(EnumType.STRING)
     @Column(name = "niveau_travaux")
     private NiveauTravaux niveauTravaux;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gamme_choisie", nullable = false)
+    private Gamme gammeChoisie = Gamme.STANDARD;
 
     @Column(nullable = false)
     private int ordre;
@@ -121,6 +127,14 @@ public class Piece {
 
     public void setNiveauTravaux(NiveauTravaux niveauTravaux) {
         this.niveauTravaux = niveauTravaux;
+    }
+
+    public Gamme getGammeChoisie() {
+        return gammeChoisie;
+    }
+
+    public void setGammeChoisie(Gamme gammeChoisie) {
+        this.gammeChoisie = gammeChoisie;
     }
 
     public int getOrdre() {
