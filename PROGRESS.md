@@ -92,6 +92,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Montants en `BigDecimal` / `NUMERIC` (quantités 3 décimales, prix et montants 2 décimales), TVA par ligne (5,5 / 10 / 20 %). Les totaux sont calculés côté serveur.
 - Multi-entreprise dès le départ : chaque donnée métier porte `organisation_id` ; un utilisateur appartient à une organisation (créée à sa première connexion en attendant les invitations). Accès à une donnée d'une autre organisation → 404.
 - API REST en français : `/api/affaires`, erreurs au format ProblemDetail. Statuts d'affaire : VISITE, ESTIMATION, DOSSIER_TRAVAUX, CHANTIER, TERMINEE, PERDUE.
+- Tests backend sur une base dédiée `faro_test` (`src/test/resources/application.properties`, variable `FARO_TEST_DB_URL`), créée par `docker/postgres-init.sql` sur un volume neuf ; la base `faro` de développement n'est plus vidée par les tests. Dans la session cloud sans Docker : `su postgres -c "createdb -O faro faro_test"`.
 - Tests d'intégration : `DatabaseCleaner` vide les tables avant chaque test, `TestTokens.user(sub)` simule un utilisateur (un sub = une organisation). Ajouter chaque nouvelle table dans `DatabaseCleaner`.
 - Première connexion : `AppUserService.findOrCreate` prend un verrou PostgreSQL par subject, la création concurrente est sûre côté serveur (le frontend appelle quand même `/api/me` en premier).
 - Contrôleurs : paramètre `@CurrentOrganisation Organisation` (résolu par `CurrentOrganisationResolver`) pour cloisonner les données.

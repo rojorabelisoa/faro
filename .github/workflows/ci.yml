@@ -11,13 +11,13 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_DB: faro
+          POSTGRES_DB: faro_test
           POSTGRES_USER: faro
           POSTGRES_PASSWORD: faro
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U faro -d faro"
+          --health-cmd "pg_isready -U faro -d faro_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10

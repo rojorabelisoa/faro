@@ -65,9 +65,13 @@ Maven n'est pas nécessaire : le projet contient `backend\mvnw.cmd`.
 ## Tests
 
 ```bash
-cd backend && ./mvnw verify      # nécessite PostgreSQL démarré (docker compose up -d postgres)
+cd backend && ./mvnw verify      # base dédiée faro_test (vidée par les tests), voir ci-dessous
 cd frontend && npm test
 ```
+
+Les tests backend utilisent la base `faro_test`, créée automatiquement par `docker compose` sur un volume neuf.
+Sur un volume existant : `docker compose exec postgres createdb -U faro faro_test`.
+Sans Docker : `CREATE DATABASE faro_test OWNER faro;`.
 
 ## API
 
