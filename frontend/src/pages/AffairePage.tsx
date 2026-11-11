@@ -135,6 +135,10 @@ export default function AffairePage() {
           lots={lots}
           vue={vue}
           onEdit={setEdition}
+          onMove={(ids) => run(async () => {
+            await api.reorderLignes(affaire.id, ids)
+            await reload()
+          })}
           onDelete={(ligne) => run(async () => {
             await api.deleteLigne(affaire.id, ligne.id)
             await reload()
@@ -253,16 +257,13 @@ interface Groupe {
 }
 
 /** Regroupe les mêmes lignes par pièce ou par lot : c'est la même donnée vue de deux façons. */
-function grouper(devis: Devis, lots: Lot[], vue: Vue): Groupe[] {
-  const ordreLot = new Map(lots.map((lot) => [lot.id, lot.ordre]))
+function grouper(devis: Devis, vue: Vue): Groupe[] {
   if (vue === 'piece') {
     return devis.parPiece.map((total) => ({
       cle: total.pieceId ?? GENERAL,
       titre: total.nom,
       totalHt: total.totalHt,
-      lignes: devis.lignes
-        .filter((ligne) => ligne.pieceId === total.pieceId)
-        .sort((a, b) => (ordreLot.get(a.lotId) ?? 0) - (ordreLot.get(b.lotId) ?? 0) || a.ordre - b.ordre),
+      lignes: devis.lignes.filter((ligne) => ligne.pieceId === total.pieceId),
     }))
   }
   return devis.parLot.map((total) => ({
@@ -273,12 +274,25 @@ function grouper(devis: Devis, lots: Lot[], vue: Vue): Groupe[] {
   }))
 }
 
-function TableDevis({ devis, pieces, lots, vue, onEdit, onDelete, onSaveToLibrary }: {
+/** Échange une ligne avec sa voisine dans le groupe affiché, et renvoie le nouvel ordre global des lignes. */
+export function deplacer(lignes: Ligne[], groupe: Ligne[], ligne: Ligne, sens: -1 | 1): string[] | null {
+  const index = groupe.findIndex((l) => l.id === ligne.id)
+  const voisine = groupe[index + sens]
+  if (!voisine) return null
+  const ids = lignes.map((l) => l.id)
+  const a = ids.indexOf(ligne.id)
+  const b = ids.indexOf(voisine.id)
+  ;[ids[a], ids[b]] = [ids[b], ids[a]]
+  return ids
+}
+
+function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onDelete, onSaveToLibrary }: {
   devis: Devis
   pieces: Piece[]
   lots: Lot[]
   vue: Vue
   onEdit: (ligne: Ligne) => void
+  onMove: (ids: string[]) => Promise<boolean>
   onDelete: (ligne: Ligne) => Promise<boolean>
   onSaveToLibrary: (ligne: Ligne) => Promise<boolean>
 }) {
@@ -306,14 +320,14 @@ function TableDevis({ devis, pieces, lots, vue, onEdit, onDelete, onSaveToLibrar
           <th><span className="sr-only">Actions</span></th>
         </tr>
       </thead>
-      {grouper(devis, lots, vue).map((groupe) => (
+      {grouper(devis, vue).map((groupe) => (
         <tbody key={groupe.cle}>
           <tr className="groupe">
             <th colSpan={6}>{groupe.titre}</th>
             <th className="nombre">{formatEuros(groupe.totalHt)}</th>
             <th />
           </tr>
-          {groupe.lignes.map((ligne) => (
+          {groupe.lignes.map((ligne, index) => (
             <tr key={ligne.id}>
               <td>
                 {ligne.designation}
@@ -326,6 +340,10 @@ function TableDevis({ devis, pieces, lots, vue, onEdit, onDelete, onSaveToLibrar
               <td className="nombre">{formatTaux(ligne.tauxTva)}</td>
               <td className="nombre">{formatEuros(ligne.montantHt)}</td>
               <td className="actions-ligne">
+                <button aria-label={`Monter ${ligne.designation}`} disabled={index === 0}
+                  onClick={() => { const ids = deplacer(devis.lignes, groupe.lignes, ligne, -1); if (ids) void onMove(ids) }}>↑</button>
+                <button aria-label={`Descendre ${ligne.designation}`} disabled={index === groupe.lignes.length - 1}
+                  onClick={() => { const ids = deplacer(devis.lignes, groupe.lignes, ligne, 1); if (ids) void onMove(ids) }}>↓</button>
                 <button onClick={() => onEdit(ligne)}>Modifier</button>
                 {!ligne.ouvrageId && (
                   <button onClick={() => void onSaveToLibrary(ligne)} title="Réutiliser cet ouvrage dans d'autres devis">
@@ -374,6 +392,7 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
   const [pieceId, setPieceId] = useState(ligne?.pieceId ?? GENERAL)
   const [lotId, setLotId] = useState(ligne?.lotId ?? '')
   const [designation, setDesignation] = useState(ligne?.designation ?? '')
+  const [description, setDescription] = useState(ligne?.description ?? '')
   const [unite, setUnite] = useState(ligne?.unite ?? 'U')
   const [quantite, setQuantite] = useState(ligne ? String(ligne.quantite).replace('.', ',') : '')
   const [prix, setPrix] = useState(ligne ? String(ligne.prixUnitaireHt).replace('.', ',') : '')
@@ -405,11 +424,13 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
     }
     setInvalide(null)
     const ok = await onSubmit({
-      pieceId: piece, lotId, designation: designation.trim(), unite, quantite: q, prixUnitaireHt: pu, tauxTva,
+      pieceId: piece, lotId, designation: designation.trim(), description: description.trim() || null,
+      unite, quantite: q, prixUnitaireHt: pu, tauxTva,
     })
     // On garde la pièce, le lot et la TVA pour enchaîner les lignes d'une même pièce.
     if (ok && !ligne) {
       setDesignation('')
+      setDescription('')
       setQuantite('')
       setPrix('')
     }
@@ -495,6 +516,11 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
           <select value={tauxTva} onChange={(e) => setTauxTva(Number(e.target.value))}>
             {TAUX_TVA.map((t) => <option key={t} value={t}>{formatTaux(t)}</option>)}
           </select>
+        </label>
+        <label className="pleine">
+          Descriptif (facultatif)
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
+            placeholder="Matériaux, marque, finitions, mise en œuvre…" />
         </label>
       </div>
       {invalide && <p role="alert" className="erreur">{invalide}</p>}

@@ -55,6 +55,8 @@ button.lien:hover { text-decoration: underline; }
 .notes { white-space: pre-wrap; color: var(--discret); }
 textarea { font: inherit; color: var(--texte); background: var(--surface); border: 1px solid var(--bord); border-radius: 6px; padding: 0.4rem 0.7rem; width: 100%; }
 .grille .pleine { grid-column: 1 / -1; }
+.actions-ligne button:disabled { opacity: 0.35; cursor: default; }
+.devis td .discret { white-space: pre-wrap; font-size: 0.9rem; }
 button.icone { border: none; padding: 0 0.3rem; background: transparent; color: var(--discret); }
 input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 

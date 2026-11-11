@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { Api, Devis } from '../api'
 import { SessionContext } from '../ApiContext'
-import AffairePage from './AffairePage'
+import AffairePage, { deplacer } from './AffairePage'
 
 const LOTS = [
   { id: 'l01', code: '01', nom: 'Installation de chantier', ordre: 1 },
@@ -100,8 +100,19 @@ describe('AffairePage', () => {
     await userEvent.click(within(form).getByRole('button', { name: 'Ajouter la ligne' }))
 
     expect(api.createLigne).toHaveBeenCalledWith('a1', {
-      pieceId: 'sdb', lotId: 'l10', designation: 'Carrelage mural', unite: 'm²', quantite: 4.25,
+      pieceId: 'sdb', lotId: 'l10', designation: 'Carrelage mural', description: null, unite: 'm²', quantite: 4.25,
       prixUnitaireHt: 72.4, tauxTva: 10,
     })
+  })
+})
+
+describe('deplacer', () => {
+  it('échange une ligne avec sa voisine du même groupe, même si d’autres lignes sont entre les deux', () => {
+    const lignes = DEVIS.lignes
+    const cuisine = lignes.filter((l) => l.pieceId === 'cuisine')
+
+    expect(deplacer(lignes, cuisine, cuisine[1], -1)).toEqual(['1', '3', '2', '4'])
+    expect(deplacer(lignes, cuisine, cuisine[0], -1)).toBeNull()
+    expect(deplacer(lignes, cuisine, cuisine[1], 1)).toBeNull()
   })
 })

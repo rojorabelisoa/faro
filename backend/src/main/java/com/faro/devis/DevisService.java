@@ -119,6 +119,20 @@ public class DevisService {
         return ligne;
     }
 
+    /** Réordonne les lignes données (toutes doivent appartenir à l'affaire) ; les autres gardent leur ordre. */
+    public void reorder(Organisation organisation, UUID affaireId, List<UUID> ids) {
+        Affaire affaire = affaireService.get(organisation, affaireId);
+        Map<UUID, LigneDevis> lignes = repository.findByAffaireIdOrderByOrdreAsc(affaire.getId()).stream()
+            .collect(Collectors.toMap(LigneDevis::getId, l -> l));
+        for (int i = 0; i < ids.size(); i++) {
+            LigneDevis ligne = lignes.get(ids.get(i));
+            if (ligne == null) {
+                throw new NotFoundException("Ligne de devis introuvable : " + ids.get(i));
+            }
+            ligne.setOrdre(i + 1);
+        }
+    }
+
     public void delete(Organisation organisation, UUID affaireId, UUID id) {
         repository.delete(get(organisation, affaireId, id));
     }

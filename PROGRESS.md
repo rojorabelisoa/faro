@@ -52,7 +52,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [ ] 2. Démo à la chargée d'études, retours dans `docs/brainstorm.md` — utilisateur
   - [ ] 3. Finir l'entretien métier (questions ouvertes de `docs/brainstorm.md`) — utilisateur
   - [ ] 4. Export PDF du devis (par pièce pour le client, par lot pour le conducteur)
-  - [ ] 5. Descriptifs détaillés affichés/saisis sur les lignes + réordonner les lignes
+  - [x] 5. Descriptifs détaillés sur les lignes (saisie + affichage) + réordonner les lignes (↑ ↓, `PUT /api/affaires/{id}/lignes/ordre`)
   - [ ] 6. Métrés depuis la pièce (sol, murs avec hauteur sous plafond, plafond, périmètre) pour remplir les quantités
   - [x] 7. Écrans manquants : modifier/supprimer une affaire (+ e-mail, téléphone, notes), modifier une pièce (clic sur la pastille), page `/lots`, modifier un ouvrage (+ descriptif)
   - [ ] 8. Import de la bibliothèque de prix (CSV exporté d'Excel ; format ProGBat inconnu)
@@ -103,6 +103,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Bibliothèque : `/api/ouvrages?q=&lotId=` (recherche par mot dans la désignation). `POST /api/affaires/{id}/lignes/depuis-ouvrage {ouvrageId, pieceId, quantite}` copie l'ouvrage dans la ligne et garde `ouvrage_id` (lien perdu si l'ouvrage est supprimé, `ON DELETE SET NULL`) : base de la future boucle prix de référence / prix devisé / coût réel.
 - `Montants` est dans `com.faro.common` ; `Montants.tauxTva(saisi)` valide et normalise le taux (400 si invalide).
 - Frontend : React Router 7 (`/`, `/affaires/:id`, `/bibliotheque`), client API typé `createApi(token)` dans `src/api.ts`, session (api + me) via `SessionContext`. Saisie des nombres à la française (« 4,25 »). Le regroupement par pièce / par lot se fait côté front à partir de `GET /devis`.
+- Ordre des lignes : choisi par l'utilisateur (champ `ordre`), utilisé tel quel dans les deux vues (pièce et lot) ; plus de tri automatique par lot dans la vue par pièce.
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions

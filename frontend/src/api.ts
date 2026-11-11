@@ -180,6 +180,8 @@ export function createApi(token: string) {
       request<Ligne>(token, `/api/affaires/${affaireId}/lignes/depuis-ouvrage`, json('POST', input)),
     updateLigne: (affaireId: string, id: string, input: LigneInput) =>
       request<Ligne>(token, `/api/affaires/${affaireId}/lignes/${id}`, json('PUT', input)),
+    reorderLignes: (affaireId: string, ids: string[]) =>
+      request<void>(token, `/api/affaires/${affaireId}/lignes/ordre`, json('PUT', { ids })),
     deleteLigne: (affaireId: string, id: string) =>
       request<void>(token, `/api/affaires/${affaireId}/lignes/${id}`, { method: 'DELETE' }),
 

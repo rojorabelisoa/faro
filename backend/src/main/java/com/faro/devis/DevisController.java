@@ -48,6 +48,13 @@ public class DevisController {
         return LigneResponse.from(devisService.createFromOuvrage(organisation, affaireId, request));
     }
 
+    @PutMapping("/lignes/ordre")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reorder(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
+            @Valid @RequestBody OrdreLignesRequest request) {
+        devisService.reorder(organisation, affaireId, request.ids());
+    }
+
     @PutMapping("/lignes/{id}")
     public LigneResponse update(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
             @PathVariable UUID id, @Valid @RequestBody LigneDevisRequest request) {

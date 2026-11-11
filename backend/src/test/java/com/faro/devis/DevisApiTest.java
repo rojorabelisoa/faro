@@ -148,6 +148,28 @@ class DevisApiTest {
     }
 
     @Test
+    void linesCanBeReordered() throws Exception {
+        String a = id(addLigne(cuisine, "07", "Évier", "U", "1", "420", null).andReturn().getResponse().getContentAsString());
+        String b = id(addLigne(cuisine, "10", "Faïence", "m²", "2", "65", null).andReturn().getResponse().getContentAsString());
+        String c = id(addLigne(sdb, "10", "Carrelage", "m²", "3", "70", null).andReturn().getResponse().getContentAsString());
+
+        mockMvc.perform(put("/api/affaires/" + affaireId + "/lignes/ordre").with(user(SUB))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"ids\": [\"%s\", \"%s\", \"%s\"]}".formatted(c, a, b)))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/devis").with(user(SUB)))
+            .andExpect(jsonPath("$.lignes[0].designation").value("Carrelage"))
+            .andExpect(jsonPath("$.lignes[1].designation").value("Évier"))
+            .andExpect(jsonPath("$.lignes[2].designation").value("Faïence"));
+
+        mockMvc.perform(put("/api/affaires/" + affaireId + "/lignes/ordre").with(user("devis-autre"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"ids\": [\"%s\"]}".formatted(a)))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
     void rejectsInvalidLines() throws Exception {
         addLigne(cuisine, "07", "Évier", "U", "1", "420", "7").andExpect(status().isBadRequest());
         addLigne(cuisine, "07", "Évier", "U", "-1", "420", null).andExpect(status().isBadRequest());
