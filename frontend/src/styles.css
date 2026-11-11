@@ -192,3 +192,5 @@ label.en-ligne { display: flex; }
 .lignes-client li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.35rem 0; border-bottom: 1px dashed var(--bord); }
 .descriptif { display: block; white-space: pre-wrap; font-size: 0.85rem; }
 .decision-client { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
+
+.bandeau-essai { margin: 0; padding: 0.5rem 16px; background: #fef0c7; color: #93370d; text-align: center; }

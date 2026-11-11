@@ -66,7 +66,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 16. Équipe (migration V13) : rôle d'entreprise (GERANT, CHARGE_ETUDES, CONDUCTEUR_TRAVAUX) sur l'utilisateur, invitations par lien à usage unique valable 7 jours (`/api/entreprise/invitations`, `/api/invitations/{code}/accepter`), renommage de l'entreprise, changement de rôle / retrait d'un membre (gérant seulement, au moins un gérant), page `/entreprise` et `/rejoindre/{code}` ; inscription activée dans le realm Keycloak
   - [x] 17. Espace client (migration V14) : lien secret révocable par affaire (`/api/affaires/{id}/acces-client`, code aléatoire 32 octets), page publique `/client/{code}` sans compte (`/api/public/client/{code}` en `permitAll`) : devis par pièce (lignes retenues), choix des gammes avant chantier, PDF, avenants envoyés avec acceptation / refus (« Nom (espace client) »), montant du marché ; dernière visite affichée à l'équipe
   - [x] 18. Déploiement préparé : `backend/Dockerfile`, `frontend/Dockerfile` + `nginx.conf` (proxy /api, SPA), `deploy/docker-compose.prod.yml` (PostgreSQL + Keycloak `start` + backend + frontend + Caddy HTTPS), realm de production sans comptes de démo (`deploy/keycloak`), `docs/deploiement.md`. Stack de production testée en local (inscription, affaire). Mise en ligne réelle BLOQUÉE : choisir hébergeur et nom de domaine ; images multi-étapes et Caddy/HTTPS non testés ici
-  - [ ] 19. Abonnements / facturation (bloqué : compte Stripe ou autre à créer ; au plus, modèle de plans)
+  - [x] 19. Offres (migration V15) : plan par entreprise ESSAI (30 jours, 3 utilisateurs) / STARTER (1) / PRO (10) / BUSINESS (illimité) — limites INDICATIVES —, limite d'utilisateurs appliquée aux invitations, bandeau de fin d'essai, page `/admin` (rôle Keycloak `admin`) pour voir les entreprises et changer leur offre. Paiement en ligne BLOQUÉ : compte Stripe (ou autre) et prix à définir ; la fin d'essai ne bloque rien pour l'instant
   - [x] 20. CI sur toutes les branches (push sur toute branche + PR ; backend via `./mvnw`)
   - [x] 21. `docker-compose.yml` testé de bout en bout (image Keycloak prise sur Docker Hub, quay.io étant bloqué dans la session cloud) : connexion + scénario devis Playwright OK
   - [x] 22. Protection serveur contre la double création d'utilisateur à la première connexion (verrou `pg_advisory_xact_lock` par subject, test de concurrence à 8 threads)
@@ -118,5 +118,6 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Questions de cadrage du MVP : voir `docs/brainstorm.md`.
 - ProGBat : obtenir un exemple de fichier d'import / export ProGBat (devis et bibliothèque) pour adapter les formats CSV.
 - Ratios d'estimation : faire valider / remplacer les valeurs indicatives par la chargée d'études.
+- Offres : fixer les prix et les limites (Starter / Pro / Business), choisir le prestataire de paiement (Stripe…) et ce qui se passe à la fin de l'essai.
 - Hébergement : choisir un serveur (VPS) et un nom de domaine pour la mise en ligne (voir `docs/deploiement.md`).
 - Un fournisseur OIDC est-il imposé en production (Google, Entra, Auth0…) ? Keycloak par défaut en attendant.

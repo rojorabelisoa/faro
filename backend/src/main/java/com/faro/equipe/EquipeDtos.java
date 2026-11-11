@@ -17,7 +17,18 @@ public final class EquipeDtos {
     private EquipeDtos() {
     }
 
-    public record EntrepriseResponse(UUID id, String nom, List<Membre> membres) {
+    public record EntrepriseResponse(UUID id, String nom, List<Membre> membres, Offre offre) {
+    }
+
+    /** maxUtilisateurs null : illimité. essaiFin : seulement pendant l'essai. */
+    public record Offre(com.faro.organisation.Plan plan, String libelle, Integer maxUtilisateurs, Instant essaiFin) {
+
+        public static Offre de(com.faro.organisation.Organisation organisation) {
+            com.faro.organisation.Plan plan = organisation.getPlan();
+            return new Offre(plan, plan.getLibelle(),
+                plan.getMaxUtilisateurs() == Integer.MAX_VALUE ? null : plan.getMaxUtilisateurs(),
+                plan == com.faro.organisation.Plan.ESSAI ? organisation.getEssaiFin() : null);
+        }
     }
 
     public record Membre(UUID id, String nom, String email, RoleEntreprise role) {

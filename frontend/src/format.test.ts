@@ -20,3 +20,13 @@ describe('parseNombre', () => {
     expect(parseNombre('')).toBeNaN()
   })
 })
+
+describe('joursRestants', () => {
+  it('arrondit au jour supérieur et ne descend pas sous zéro', async () => {
+    const { joursRestants } = await import('./format')
+    const maintenant = new Date('2026-11-11T10:00:00Z')
+    expect(joursRestants('2026-11-21T09:00:00Z', maintenant)).toBe(10)
+    expect(joursRestants('2026-11-11T11:00:00Z', maintenant)).toBe(1)
+    expect(joursRestants('2026-11-01T10:00:00Z', maintenant)).toBe(0)
+  })
+})

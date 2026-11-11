@@ -72,3 +72,15 @@ export const LIBELLES_ROLE: Record<string, string> = {
   CHARGE_ETUDES: "Chargé d'études",
   CONDUCTEUR_TRAVAUX: 'Conducteur de travaux',
 }
+
+export const LIBELLES_PLAN: Record<string, string> = {
+  ESSAI: 'Essai gratuit',
+  STARTER: 'Starter',
+  PRO: 'Pro',
+  BUSINESS: 'Business',
+}
+
+/** Jours restants (arrondis au supérieur) avant une date, 0 si elle est passée. */
+export function joursRestants(date: string, maintenant = new Date()): number {
+  return Math.max(0, Math.ceil((new Date(date).getTime() - maintenant.getTime()) / 86_400_000))
+}

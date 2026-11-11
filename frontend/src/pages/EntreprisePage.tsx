@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import type { Entreprise, Invitation, RoleEntreprise } from '../api'
 import { useSession } from '../ApiContext'
-import { LIBELLES_ROLE } from '../format'
+import { joursRestants, LIBELLES_ROLE } from '../format'
 
 const lienInvitation = (code: string) => `${window.location.origin}/rejoindre/${code}`
 
@@ -76,6 +76,17 @@ export default function EntreprisePage() {
             <button type="submit">Enregistrer</button>
           </form>
         ) : <p>{entreprise.nom}</p>}
+      </section>
+
+      <section className="carte">
+        <h2>Offre</h2>
+        <p>
+          <strong>{entreprise.offre.libelle}</strong>
+          {' · '}{entreprise.offre.maxUtilisateurs == null ? 'utilisateurs illimités'
+            : `jusqu'à ${entreprise.offre.maxUtilisateurs} utilisateur(s)`}
+          {entreprise.offre.essaiFin && ` · ${joursRestants(entreprise.offre.essaiFin)} jour(s) d'essai restant(s)`}
+        </p>
+        <p className="discret">Pour changer d'offre, contactez-nous (le paiement en ligne arrive bientôt).</p>
       </section>
 
       <section className="carte">

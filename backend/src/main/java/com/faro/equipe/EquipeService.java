@@ -45,7 +45,8 @@ public class EquipeService {
         Organisation organisation = user.getOrganisation();
         List<Membre> membres = users.findByOrganisationIdOrderByDisplayNameAsc(organisation.getId()).stream()
             .map(u -> new Membre(u.getId(), u.getDisplayName(), u.getEmail(), u.getRoleEntreprise())).toList();
-        return new EntrepriseResponse(organisation.getId(), organisation.getNom(), membres);
+        return new EntrepriseResponse(organisation.getId(), organisation.getNom(), membres,
+            EquipeDtos.Offre.de(organisation));
     }
 
     public void renommer(AppUser gerant, String nom) {
@@ -85,6 +86,14 @@ public class EquipeService {
     public Invitation inviter(AppUser gerant, RoleEntreprise role, String email) {
         gerant = attache(gerant);
         verifierGerant(gerant);
+        Organisation organisation = gerant.getOrganisation();
+        int places = users.findByOrganisationIdOrderByDisplayNameAsc(organisation.getId()).size()
+            + invitations.findByOrganisationIdAndUsedAtIsNullOrderByCreatedAtDesc(organisation.getId()).size();
+        if (places >= organisation.getPlan().getMaxUtilisateurs()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "L'offre " + organisation.getPlan().getLibelle()
+                + " est limitée à " + organisation.getPlan().getMaxUtilisateurs()
+                + " utilisateur(s), invitations en attente comprises.");
+        }
         byte[] octets = new byte[24];
         ALEA.nextBytes(octets);
         String code = Base64.getUrlEncoder().withoutPadding().encodeToString(octets);

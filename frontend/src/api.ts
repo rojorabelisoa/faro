@@ -17,10 +17,25 @@ export interface Me {
 
 export type RoleEntreprise = 'GERANT' | 'CHARGE_ETUDES' | 'CONDUCTEUR_TRAVAUX'
 
+export type Plan = 'ESSAI' | 'STARTER' | 'PRO' | 'BUSINESS'
+
 export interface Entreprise {
   id: string
   nom: string
   membres: { id: string; nom: string | null; email: string | null; role: RoleEntreprise }[]
+  /** maxUtilisateurs null : illimité ; essaiFin seulement pendant l'essai. */
+  offre: { plan: Plan; libelle: string; maxUtilisateurs: number | null; essaiFin: string | null }
+}
+
+export interface OrganisationAdmin {
+  id: string
+  nom: string
+  plan: Plan
+  essaiFin: string | null
+  createdAt: string
+  utilisateurs: number
+  affaires: number
+  derniereActivite: string | null
 }
 
 export interface Invitation {
@@ -444,6 +459,10 @@ export function createApi(token: string) {
       request<{ entreprise: string; role: RoleEntreprise; utilisable: boolean }>(token, `/api/invitations/${code}`),
     accepterInvitation: (code: string) =>
       request<void>(token, `/api/invitations/${code}/accepter`, { method: 'POST' }),
+
+    adminOrganisations: () => request<OrganisationAdmin[]>(token, '/api/admin/organisations'),
+    adminChangerPlan: (id: string, plan: Plan) =>
+      request<void>(token, `/api/admin/organisations/${id}/plan`, json('PUT', { plan })),
 
     affaires: () => request<Affaire[]>(token, '/api/affaires'),
     affaire: (id: string) => request<Affaire>(token, `/api/affaires/${id}`),

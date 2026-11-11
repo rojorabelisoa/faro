@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from 'react-oidc-context'
 import { BrowserRouter, NavLink, Route, Routes } from 'react-router'
 import { createApi, type Me } from './api'
+import { joursRestants } from './format'
 import { SessionContext, useSession } from './ApiContext'
 import AffairesPage from './pages/AffairesPage'
 import AffairePage from './pages/AffairePage'
@@ -10,6 +11,7 @@ import LotsPage from './pages/LotsPage'
 import EspaceClientPage from './pages/EspaceClientPage'
 import RatiosPage from './pages/RatiosPage'
 import EntreprisePage from './pages/EntreprisePage'
+import AdminPage from './pages/AdminPage'
 import RejoindrePage from './pages/RejoindrePage'
 
 export default function App() {
@@ -77,10 +79,29 @@ function Application() {
             <Route path="/ratios" element={<RatiosPage />} />
             <Route path="/entreprise" element={<EntreprisePage />} />
             <Route path="/rejoindre/:code" element={<RejoindrePage />} />
+            {me.roles.includes('admin') && <Route path="/admin" element={<AdminPage />} />}
           </Routes>
         </Layout>
       </BrowserRouter>
     </SessionContext.Provider>
+  )
+}
+
+/** Rappelle la fin de l'essai gratuit (dans les 10 derniers jours). */
+function BandeauEssai() {
+  const { api } = useSession()
+  const [essaiFin, setEssaiFin] = useState<string | null>(null)
+  useEffect(() => {
+    api.entreprise().then((e) => setEssaiFin(e.offre.essaiFin)).catch(() => setEssaiFin(null))
+  }, [api])
+  if (!essaiFin) return null
+  const jours = joursRestants(essaiFin)
+  if (jours > 10) return null
+  return (
+    <p className="bandeau-essai" role="status">
+      {jours === 0 ? "Votre essai gratuit est terminé" : `Votre essai gratuit se termine dans ${jours} jour(s)`}
+      {' — '}<NavLink to="/entreprise">voir les offres</NavLink>
+    </p>
   )
 }
 
@@ -96,12 +117,14 @@ function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: (
           <NavLink to="/lots">Lots</NavLink>
           <NavLink to="/ratios">Ratios</NavLink>
           <NavLink to="/entreprise">Entreprise</NavLink>
+          {me.roles.includes('admin') && <NavLink to="/admin">Admin SaaS</NavLink>}
         </nav>
         <span className="utilisateur">
           {me.displayName ?? me.email ?? me.subject} · {me.organisation.nom}
         </span>
         <button onClick={onLogout}>Se déconnecter</button>
       </header>
+      <BandeauEssai />
       <main className="contenu">{children}</main>
     </>
   )
