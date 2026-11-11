@@ -2,6 +2,7 @@ package com.faro.user;
 
 import java.time.Instant;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +16,12 @@ public class AppUserService {
 
     private final AppUserRepository repository;
     private final OrganisationService organisationService;
+    private final JdbcTemplate jdbc;
 
-    public AppUserService(AppUserRepository repository, OrganisationService organisationService) {
+    public AppUserService(AppUserRepository repository, OrganisationService organisationService, JdbcTemplate jdbc) {
         this.repository = repository;
         this.organisationService = organisationService;
+        this.jdbc = jdbc;
     }
 
     /** Crée l'utilisateur à sa première visite, puis met à jour son profil depuis le jeton. */
@@ -38,6 +41,9 @@ public class AppUserService {
     }
 
     private AppUser findOrCreate(Jwt jwt) {
+        // Verrou par utilisateur jusqu'à la fin de la transaction : deux premières requêtes simultanées
+        // ne créent pas deux fois l'utilisateur et son organisation.
+        jdbc.query("SELECT pg_advisory_xact_lock(hashtext(?))", rs -> { }, jwt.getSubject());
         AppUser user = repository.findBySubject(jwt.getSubject()).orElseGet(() -> {
             AppUser created = new AppUser(jwt.getSubject());
             created.setEmail(jwt.getClaimAsString("email"));

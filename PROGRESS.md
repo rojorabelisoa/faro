@@ -69,7 +69,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [ ] 19. Abonnements / facturation (bloqué : compte Stripe ou autre à créer ; au plus, modèle de plans)
   - [x] 20. CI sur toutes les branches (push sur toute branche + PR ; backend via `./mvnw`)
   - [ ] 21. Tester `docker-compose.yml` de bout en bout (Docker disponible dans la session cloud depuis le 2026-11-11 : `dockerd &`)
-  - [ ] 22. Protection serveur contre la double création d'utilisateur à la première connexion
+  - [x] 22. Protection serveur contre la double création d'utilisateur à la première connexion (verrou `pg_advisory_xact_lock` par subject, test de concurrence à 8 threads)
   - [ ] 23. Plus tard (business plan) : module investisseur (rentabilité, TRI), achats / bons de commande, IA (bloquée : clé API)
 
 ## Fait
@@ -93,7 +93,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Multi-entreprise dès le départ : chaque donnée métier porte `organisation_id` ; un utilisateur appartient à une organisation (créée à sa première connexion en attendant les invitations). Accès à une donnée d'une autre organisation → 404.
 - API REST en français : `/api/affaires`, erreurs au format ProblemDetail. Statuts d'affaire : VISITE, ESTIMATION, DOSSIER_TRAVAUX, CHANTIER, TERMINEE, PERDUE.
 - Tests d'intégration : `DatabaseCleaner` vide les tables avant chaque test, `TestTokens.user(sub)` simule un utilisateur (un sub = une organisation). Ajouter chaque nouvelle table dans `DatabaseCleaner`.
-- Le frontend doit appeler `/api/me` avant les autres appels à la première connexion (création utilisateur + organisation, évite une double création concurrente).
+- Première connexion : `AppUserService.findOrCreate` prend un verrou PostgreSQL par subject, la création concurrente est sûre côté serveur (le frontend appelle quand même `/api/me` en premier).
 - Contrôleurs : paramètre `@CurrentOrganisation Organisation` (résolu par `CurrentOrganisationResolver`) pour cloisonner les données.
 - Les 14 lots par défaut (`LotService.LOTS_PAR_DEFAUT`) sont créés via `OrganisationCreatedEvent` à la création d'une organisation. API `/api/lots` ; code de lot unique par organisation (409 sinon).
 - Pièces : `/api/affaires/{id}/pieces`, supprimées en cascade avec l'affaire (`ON DELETE CASCADE`).
