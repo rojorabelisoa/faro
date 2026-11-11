@@ -54,6 +54,7 @@ function renderPage(devis: Devis = DEVIS) {
     choisirGamme: vi.fn().mockResolvedValue(undefined),
     versions: vi.fn().mockResolvedValue([]),
     liensClient: vi.fn().mockResolvedValue([]),
+    bilan: vi.fn().mockResolvedValue({ hypotheses: null, travauxTtc: 0, scenarios: [] }),
     marge: vi.fn().mockResolvedValue({ lots: [], total: { venduHt: 0, coutPrevuHt: 0, coutReelHt: 0, margePrevueHt: 0, margeReelleHt: 0, tauxMargePrevue: null, tauxMargeReelle: null, lignesSansDebourse: 0 }, depenses: [] }),
     ouvrages: vi.fn().mockResolvedValue([]),
     createLigne: vi.fn().mockResolvedValue({}),
@@ -97,7 +98,8 @@ describe('AffairePage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Par lot' }))
 
     expect(groupes()).toEqual([
-      '01 · Installation de chantier350,00 €', '07 · Plomberie420,00 €', '10 · Carrelage860,20 €',
+      '01 · Installation de chantierBon de commande350,00 €', '07 · PlomberieBon de commande420,00 €',
+      '10 · CarrelageBon de commande860,20 €',
     ])
     const total = screen.getAllByRole('row').find((row) => row.classList.contains('total'))
     expect(texte(total?.textContent ?? null)).toBe('Total TTC1 793,22 €')

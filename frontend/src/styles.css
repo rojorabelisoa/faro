@@ -194,3 +194,7 @@ label.en-ligne { display: flex; }
 .decision-client { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
 
 .bandeau-essai { margin: 0; padding: 0.5rem 16px; background: #fef0c7; color: #93370d; text-align: center; }
+
+details.carte > summary { cursor: pointer; list-style: revert; }
+.en-ligne-titre { display: inline; }
+.bouton-groupe { font-size: 0.8rem; padding: 0.15rem 0.5rem; margin-left: 0.75rem; font-weight: 400; }

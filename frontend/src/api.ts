@@ -367,6 +367,28 @@ export function createPublicApi(code: string) {
   }
 }
 
+export interface HypothesesBilan {
+  prixAchat: number
+  fraisAcquisition: number
+  autresFrais: number
+  prixRevente: number
+  dureeMois: number
+}
+
+export interface Bilan {
+  hypotheses: HypothesesBilan | null
+  travauxTtc: number
+  scenarios: {
+    scenario: string
+    travauxTtc: number
+    coutTotal: number
+    margeBrute: number
+    rentabilite: number | null
+    triAnnuel: number | null
+    dureeMois: number
+  }[]
+}
+
 export interface ImportResultat {
   importes: number
   misAJour: number
@@ -563,6 +585,12 @@ export function createApi(token: string) {
       request<LienClient>(token, `/api/affaires/${affaireId}/acces-client`, { method: 'POST' }),
     revoquerLienClient: (affaireId: string, id: string) =>
       request<void>(token, `/api/affaires/${affaireId}/acces-client/${id}`, { method: 'DELETE' }),
+
+    bilan: (affaireId: string) => request<Bilan>(token, `/api/affaires/${affaireId}/bilan`),
+    enregistrerBilan: (affaireId: string, input: HypothesesBilan) =>
+      request<Bilan>(token, `/api/affaires/${affaireId}/bilan`, json('PUT', input)),
+    bonCommande: (affaireId: string, lotId: string, fournisseur: string) =>
+      download(token, `/api/affaires/${affaireId}/lots/${lotId}/bon-commande.pdf?fournisseur=${encodeURIComponent(fournisseur)}`),
 
     exportOuvrages: () => download(token, '/api/ouvrages/export.csv'),
     importOuvrages: (fichier: File) => importCsv(token, fichier),

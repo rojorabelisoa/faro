@@ -9,6 +9,6 @@ public final class DatabaseCleaner {
     }
 
     public static void clean(JdbcTemplate jdbc) {
-        jdbc.execute("TRUNCATE acces_client, invitation, depense, avenant, devis_version, ratio, observation, photo, ligne_devis, ouvrage, piece, lot, affaire, app_user, organisation CASCADE");
+        jdbc.execute("TRUNCATE bilan_operation, acces_client, invitation, depense, avenant, devis_version, ratio, observation, photo, ligne_devis, ouvrage, piece, lot, affaire, app_user, organisation CASCADE");
     }
 }

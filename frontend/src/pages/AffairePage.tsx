@@ -7,6 +7,7 @@ import { useSession } from '../ApiContext'
 import FormulaireAffaire from '../components/FormulaireAffaire'
 import { nomFichier, telecharger } from '../components/telecharger'
 import AccesClient from '../components/AccesClient'
+import BilanOperation from '../components/BilanOperation'
 import Avenants from '../components/Avenants'
 import MargeChantier from '../components/MargeChantier'
 import Versions from '../components/Versions'
@@ -170,6 +171,11 @@ export default function AffairePage() {
           lots={lots}
           vue={vue}
           onEdit={setEdition}
+          onBonCommande={(lotId) => {
+            const fournisseur = window.prompt('Fournisseur (facultatif) :') ?? ''
+            void run(async () => telecharger(await api.bonCommande(affaire.id, lotId, fournisseur),
+              `bon-commande-${nomFichier(affaire.nom)}-${lots.find((l) => l.id === lotId)?.code ?? 'lot'}.pdf`))
+          }}
           onChoisirGamme={(pieceId, gamme) => run(async () => {
             await api.choisirGamme(affaire.id, pieceId, gamme)
             await reload()
@@ -221,6 +227,8 @@ export default function AffairePage() {
       <MargeChantier affaireId={affaire.id} lots={lots} version={devis} />
 
       <AccesClient affaireId={affaire.id} />
+
+      <BilanOperation affaireId={affaire.id} version={devis} />
     </>
   )
 }
@@ -407,8 +415,10 @@ export function deplacer(lignes: Ligne[], groupe: Ligne[], ligne: Ligne, sens: -
   return ids
 }
 
-function TableDevis({ fige, devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, onDelete, onSaveToLibrary }: {
+function TableDevis({ fige, devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, onBonCommande, onDelete,
+  onSaveToLibrary }: {
   fige: boolean
+  onBonCommande: (lotId: string) => void
   devis: Devis
   pieces: Piece[]
   lots: Lot[]
@@ -448,6 +458,9 @@ function TableDevis({ fige, devis, pieces, lots, vue, onEdit, onMove, onChoisirG
           <tr className="groupe">
             <th colSpan={6}>
               {groupe.titre}
+              {vue === 'lot' && (
+                <button className="bouton-groupe" onClick={() => onBonCommande(groupe.cle)}>Bon de commande</button>
+              )}
               {groupe.gammes && (
                 <span className="gammes" role="group" aria-label={`Gamme ${groupe.titre}`}>
                   {(Object.keys(LIBELLES_GAMME) as Gamme[]).map((gamme) => (

@@ -21,8 +21,9 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 ## En cours
 
-- Phase 3, backlog : en cours de réalisation dans l'ordre 20, 22, 21, 7, 5, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 23.
-- Reprise automatique : tâche planifiée « Reprise backlog faro » (`trig_01Dtkand7AoEABUZATjsPNrw`, à la 16e minute de chaque heure) qui relance cette session si elle est interrompue (limite d'usage). La désactiver (update_trigger enabled=false) quand le backlog est terminé.
+- Phase 3 terminée pour tout ce que Claude pouvait faire (points 4 à 23). Restent : points 1 à 3 (utilisateur) et les parties bloquées listées dans « Bloquants / questions ».
+- Prochaine étape : démo à la chargée d'études avec toutes les fonctions, puis prioriser ses retours.
+- Reprise automatique : la tâche planifiée « Reprise backlog faro » (`trig_01Dtkand7AoEABUZATjsPNrw`) a été désactivée à la fin du backlog (2026-11-11).
 - En parallèle : entretien métier non terminé (questions de suivi dans `docs/brainstorm.md`). L'utilisateur a demandé de commencer sans attendre.
 
 ## À faire
@@ -70,7 +71,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 20. CI sur toutes les branches (push sur toute branche + PR ; backend via `./mvnw`)
   - [x] 21. `docker-compose.yml` testé de bout en bout (image Keycloak prise sur Docker Hub, quay.io étant bloqué dans la session cloud) : connexion + scénario devis Playwright OK
   - [x] 22. Protection serveur contre la double création d'utilisateur à la première connexion (verrou `pg_advisory_xact_lock` par subject, test de concurrence à 8 threads)
-  - [ ] 23. Plus tard (business plan) : module investisseur (rentabilité, TRI), achats / bons de commande, IA (bloquée : clé API)
+  - [x] 23. Plus tard (business plan), version 1 : bilan d'opération investisseur (migration V16 ; achat, frais, travaux = marché actuel TTC, revente, durée → marge, rentabilité, TRI annualisé simplifié, scénarios travaux +10 % et retard +3 mois) et bons de commande PDF par lot (ouvrages retenus + avenants validés, sans prix). IA BLOQUÉE : clé API (ex. Claude) et cas d'usage à valider (lecture de devis PDF, détection d'oublis)
 
 ## Fait
 
@@ -117,6 +118,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 - Questions de cadrage du MVP : voir `docs/brainstorm.md`.
 - ProGBat : obtenir un exemple de fichier d'import / export ProGBat (devis et bibliothèque) pour adapter les formats CSV.
+- IA : choisir les premiers cas d'usage et fournir une clé API.
 - Ratios d'estimation : faire valider / remplacer les valeurs indicatives par la chargée d'études.
 - Offres : fixer les prix et les limites (Starter / Pro / Business), choisir le prestataire de paiement (Stripe…) et ce qui se passe à la fin de l'essai.
 - Hébergement : choisir un serveur (VPS) et un nom de domaine pour la mise en ligne (voir `docs/deploiement.md`).

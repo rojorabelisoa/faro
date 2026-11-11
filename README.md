@@ -9,6 +9,20 @@ Application web **Java (Spring Boot) + React**, avec authentification **OAuth2 /
 | Fournisseur OIDC | Keycloak (Docker), realm `faro` | 8180 |
 | Base de données | PostgreSQL 17 (Docker) | 5432 |
 
+## Fonctionnalités
+
+- **Affaires** : client, pièces avec métrés (sol, murs, périmètre), statut de la visite au chantier.
+- **Visite** : notes et photos par pièce (sur mobile), compte-rendu PDF.
+- **Estimation rapide** en fourchette (ratios €/m² par type de pièce, recalés sur les devis).
+- **Devis pièces × lots** : chaque ouvrage saisi une fois, vue par pièce (client) ou par lot (chantier), descriptifs,
+  options Eco / Standard / Premium, bibliothèque de prix (import / export CSV Excel), PDF, export CSV.
+- **Versions figées** du devis et **passage en chantier** (dossier travaux de référence).
+- **Avenants** : brouillon → envoyé → validé / refusé, montant du marché.
+- **Marge** prévue (déboursé sec) contre réelle (dépenses), par lot ; **bons de commande** par lot.
+- **Espace client** par lien secret : devis, choix des finitions, validation des avenants.
+- **Équipe** : gérant, chargé d'études, conducteur de travaux, invitations ; **offres** et page d'administration du SaaS.
+- **Module investisseur** : bilan d'opération, rentabilité, TRI, scénarios.
+
 ## Lancer en local
 
 Prérequis : Docker, Java 21, Node.js 22 (Maven est fourni par `backend/mvnw`).
