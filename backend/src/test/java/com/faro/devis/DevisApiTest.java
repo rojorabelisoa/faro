@@ -1,11 +1,13 @@
 package com.faro.devis;
 
 import static com.faro.TestTokens.user;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -167,6 +169,40 @@ class DevisApiTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"ids\": [\"%s\"]}".formatted(a)))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void devisIsExportedAsPdfByPieceAndByLot() throws Exception {
+        addLigne(null, "01", "Protection des sols", "forfait", "1", "350.00", null).andExpect(status().isCreated());
+        addLigne(sdb, "10", "Carrelage sol", "m²", "4.25", "72.40", "10").andExpect(status().isCreated());
+        addLigne(sdb, "09", "VMC hygroréglable", "U", "1", "980.00", "5.5").andExpect(status().isCreated());
+
+        byte[] parPiece = mockMvc.perform(get("/api/affaires/" + affaireId + "/devis.pdf").with(user(SUB)))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Type", "application/pdf"))
+            .andReturn().getResponse().getContentAsByteArray();
+        String texte = texte(parPiece);
+        assertThat(texte).contains("Devis — T3 Lyon", "Général", "Salle de bains", "Carrelage sol", "VMC hygroréglable",
+            "Total TTC", "1 757,37 €", "Bon pour accord");
+
+        byte[] parLot = mockMvc.perform(get("/api/affaires/" + affaireId + "/devis.pdf").param("vue", "LOT")
+                .with(user(SUB)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsByteArray();
+        assertThat(texte(parLot)).contains("présentation par lot", "10 · Carrelage / Faïence", "1 757,37 €");
+
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/devis.pdf").with(user("devis-autre")))
+            .andExpect(status().isNotFound());
+    }
+
+    private static String texte(byte[] pdf) throws Exception {
+        org.openpdf.text.pdf.PdfReader reader = new org.openpdf.text.pdf.PdfReader(pdf);
+        org.openpdf.text.pdf.parser.PdfTextExtractor extracteur = new org.openpdf.text.pdf.parser.PdfTextExtractor(reader);
+        StringBuilder texte = new StringBuilder();
+        for (int page = 1; page <= reader.getNumberOfPages(); page++) {
+            texte.append(extracteur.getTextFromPage(page)).append('\n');
+        }
+        return texte.toString();
     }
 
     @Test

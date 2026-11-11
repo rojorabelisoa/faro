@@ -51,7 +51,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [ ] 1. Installer faro sur le PC de l'utilisateur (Windows + Docker sous WSL) — utilisateur, via sa session Remote Control
   - [ ] 2. Démo à la chargée d'études, retours dans `docs/brainstorm.md` — utilisateur
   - [ ] 3. Finir l'entretien métier (questions ouvertes de `docs/brainstorm.md`) — utilisateur
-  - [ ] 4. Export PDF du devis (par pièce pour le client, par lot pour le conducteur)
+  - [x] 4. Export PDF du devis (OpenPDF 3, `GET /api/affaires/{id}/devis.pdf?vue=PIECE|LOT`, boutons « PDF client » / « PDF chantier ») — à compléter plus tard avec les mentions légales de l'entreprise (SIRET, assurance décennale…)
   - [x] 5. Descriptifs détaillés sur les lignes (saisie + affichage) + réordonner les lignes (↑ ↓, `PUT /api/affaires/{id}/lignes/ordre`)
   - [ ] 6. Métrés depuis la pièce (sol, murs avec hauteur sous plafond, plafond, périmètre) pour remplir les quantités
   - [x] 7. Écrans manquants : modifier/supprimer une affaire (+ e-mail, téléphone, notes), modifier une pièce (clic sur la pastille), page `/lots`, modifier un ouvrage (+ descriptif)

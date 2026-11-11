@@ -146,6 +146,12 @@ async function request<T>(token: string, path: string, init: RequestInit = {}): 
   return response.status === 204 ? (undefined as T) : response.json()
 }
 
+async function download(token: string, path: string): Promise<Blob> {
+  const response = await fetch(`${apiUrl}${path}`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!response.ok) throw new ApiError(response.status, `Erreur API ${response.status}`)
+  return response.blob()
+}
+
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) })
 
 /** Client de l'API faro, lié au jeton d'accès de l'utilisateur connecté. */
@@ -174,6 +180,8 @@ export function createApi(token: string) {
     deleteLot: (id: string) => request<void>(token, `/api/lots/${id}`, { method: 'DELETE' }),
 
     devis: (affaireId: string) => request<Devis>(token, `/api/affaires/${affaireId}/devis`),
+    devisPdf: (affaireId: string, vue: 'PIECE' | 'LOT') =>
+      download(token, `/api/affaires/${affaireId}/devis.pdf?vue=${vue}`),
     createLigne: (affaireId: string, input: LigneInput) =>
       request<Ligne>(token, `/api/affaires/${affaireId}/lignes`, json('POST', input)),
     createLigneDepuisOuvrage: (affaireId: string, input: { ouvrageId: string; pieceId: string | null; quantite: number }) =>

@@ -59,6 +59,20 @@ export default function AffairePage() {
   const changeStatut = (statut: StatutAffaire) =>
     run(async () => setAffaire(await api.updateAffaire(affaire.id, { ...affaire, statut })))
 
+  /** Le PDF demande le jeton d'accès : on le télécharge puis on le propose comme fichier. */
+  async function telechargerPdf(vue: 'PIECE' | 'LOT') {
+    if (!affaire) return
+    await run(async () => {
+      const blob = await api.devisPdf(affaire.id, vue)
+      const url = URL.createObjectURL(blob)
+      const lien = document.createElement('a')
+      lien.href = url
+      lien.download = `devis-${affaire.nom.replace(/[^\p{L}\p{N}]+/gu, '-')}-${vue === 'PIECE' ? 'client' : 'chantier'}.pdf`
+      lien.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    })
+  }
+
   async function supprimer() {
     if (!affaire || !window.confirm(`Supprimer définitivement l'affaire « ${affaire.nom} » et tout son devis ?`)) return
     if (await run(() => api.deleteAffaire(affaire.id))) navigate('/')
@@ -123,6 +137,10 @@ export default function AffairePage() {
       <section className="carte">
         <div className="titre-section">
           <h2>Devis</h2>
+          <div className="en-ligne">
+            <button onClick={() => void telechargerPdf('PIECE')}>PDF client (par pièce)</button>
+            <button onClick={() => void telechargerPdf('LOT')}>PDF chantier (par lot)</button>
+          </div>
           <div className="bascule" role="group" aria-label="Présentation du devis">
             <button aria-pressed={vue === 'piece'} onClick={() => setVue('piece')}>Par pièce</button>
             <button aria-pressed={vue === 'lot'} onClick={() => setVue('lot')}>Par lot</button>
