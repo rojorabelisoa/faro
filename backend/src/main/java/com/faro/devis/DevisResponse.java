@@ -34,7 +34,7 @@ public record DevisResponse(
             boolean incluse,
             int ordre) {
 
-        static LigneResponse from(LigneDevis ligne) {
+        public static LigneResponse from(LigneDevis ligne) {
             return new LigneResponse(ligne.getId(),
                 ligne.getPiece() != null ? ligne.getPiece().getId() : null,
                 ligne.getLot().getId(), ligne.getOuvrage() != null ? ligne.getOuvrage().getId() : null,

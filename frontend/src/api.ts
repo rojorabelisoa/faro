@@ -205,6 +205,41 @@ export interface Visite {
   photos: PhotoInfo[]
 }
 
+export type StatutAvenant = 'BROUILLON' | 'ENVOYE' | 'VALIDE' | 'REFUSE'
+
+export interface Totaux {
+  totalHt: number
+  tva: { taux: number; baseHt: number; montant: number }[]
+  totalTva: number
+  totalTtc: number
+}
+
+export interface Avenant {
+  id: string
+  numero: number
+  objet: string
+  motif: string | null
+  statut: StatutAvenant
+  lignes: Ligne[]
+  totaux: Totaux
+  createdAt: string
+  envoyeAt: string | null
+  decideAt: string | null
+  decidePar: string | null
+  decisionCommentaire: string | null
+}
+
+export interface Marche {
+  chantier: boolean
+  initialHt: number
+  initialTtc: number
+  avenantsValidesHt: number
+  avenantsValidesTtc: number
+  actuelHt: number
+  actuelTtc: number
+  avenantsEnAttenteHt: number
+}
+
 export interface ImportResultat {
   importes: number
   misAJour: number
@@ -353,6 +388,21 @@ export function createApi(token: string) {
       request<Version>(token, `/api/affaires/${affaireId}/chantier`, json('POST', {})),
     versionPdf: (affaireId: string, id: string, vue: 'PIECE' | 'LOT') =>
       download(token, `/api/affaires/${affaireId}/versions/${id}/devis.pdf?vue=${vue}`),
+
+    avenants: (affaireId: string) => request<Avenant[]>(token, `/api/affaires/${affaireId}/avenants`),
+    marche: (affaireId: string) => request<Marche>(token, `/api/affaires/${affaireId}/marche`),
+    createAvenant: (affaireId: string, input: { objet: string; motif: string | null }) =>
+      request<Avenant>(token, `/api/affaires/${affaireId}/avenants`, json('POST', input)),
+    deleteAvenant: (affaireId: string, id: string) =>
+      request<void>(token, `/api/affaires/${affaireId}/avenants/${id}`, { method: 'DELETE' }),
+    addLigneAvenant: (affaireId: string, id: string, input: LigneInput) =>
+      request<Ligne>(token, `/api/affaires/${affaireId}/avenants/${id}/lignes`, json('POST', input)),
+    envoyerAvenant: (affaireId: string, id: string) =>
+      request<Avenant>(token, `/api/affaires/${affaireId}/avenants/${id}/envoyer`, { method: 'POST' }),
+    deciderAvenant: (affaireId: string, id: string, input: { decision: 'VALIDE' | 'REFUSE'; par: string; commentaire: string | null }) =>
+      request<Avenant>(token, `/api/affaires/${affaireId}/avenants/${id}/decision`, json('POST', input)),
+    avenantPdf: (affaireId: string, id: string) =>
+      download(token, `/api/affaires/${affaireId}/avenants/${id}/document.pdf`),
 
     exportOuvrages: () => download(token, '/api/ouvrages/export.csv'),
     importOuvrages: (fichier: File) => importCsv(token, fichier),

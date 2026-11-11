@@ -199,11 +199,11 @@ public class DevisPdfService {
         return texte.replace(' ', ' ').replace(' ', ' ');
     }
 
-    static String euros(BigDecimal montant) {
+    public static String euros(BigDecimal montant) {
         return sansEspacesFines(NumberFormat.getCurrencyInstance(Locale.FRANCE).format(montant));
     }
 
-    static String nombre(BigDecimal valeur) {
+    public static String nombre(BigDecimal valeur) {
         NumberFormat format = NumberFormat.getNumberInstance(Locale.FRANCE);
         format.setMaximumFractionDigits(3);
         return sansEspacesFines(format.format(valeur));

@@ -18,6 +18,7 @@ import jakarta.persistence.Table;
 
 import com.faro.affaire.Affaire;
 import com.faro.affaire.Piece;
+import com.faro.avenant.Avenant;
 import com.faro.bibliotheque.Ouvrage;
 import com.faro.common.Montants;
 import com.faro.lot.Lot;
@@ -46,6 +47,11 @@ public class LigneDevis {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "lot_id", nullable = false)
     private Lot lot;
+
+    /** Avenant auquel appartient la ligne (null : ligne du devis de base). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "avenant_id", updatable = false)
+    private Avenant avenant;
 
     /** Ouvrage de la bibliothèque dont la ligne est issue (null si saisie libre). */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -115,6 +121,14 @@ public class LigneDevis {
 
     public void setLot(Lot lot) {
         this.lot = lot;
+    }
+
+    public Avenant getAvenant() {
+        return avenant;
+    }
+
+    public void setAvenant(Avenant avenant) {
+        this.avenant = avenant;
     }
 
     public Ouvrage getOuvrage() {

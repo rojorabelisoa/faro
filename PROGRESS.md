@@ -60,7 +60,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 10. Estimation rapide en fourchette : type de pièce + niveau de travaux sur la pièce (type deviné depuis le nom), ratios €/m² min/max par organisation (migration V8, 24 ratios INDICATIFS à faire valider par la chargée d'études), page `/ratios` avec €/m² constatés dans les devis (médiane), comparaison estimation / devis détaillé
   - [x] 11. Options Eco / Standard / Premium : gamme facultative par ligne (null = commune), gamme choisie par pièce et par affaire pour les lignes générales (migration V9, `PUT .../pieces/{id}/gamme`, `PUT /api/affaires/{id}/gamme`), totaux / TVA / PDF / vue par lot sur les lignes retenues, prix de chaque gamme par pièce et comparatif global
   - [x] 12. Versions figées du devis (migration V10, JSON complet du devis + en-tête dans `devis_version.contenu`, numérotées, PDF par version) et passage en chantier (`POST /api/affaires/{id}/chantier` : fige « Dossier travaux », statut CHANTIER, `affaire.version_chantier_id` = référence pour avenants et marge)
-  - [ ] 13. Travaux supplémentaires / avenants : chiffrage, validation client, historique opposable
+  - [x] 13. Avenants (migration V11) : lignes de devis rattachées à un avenant (`ligne_devis.avenant_id`), cycle BROUILLON → ENVOYE (contenu figé en JSON) → VALIDE / REFUSE (qui, quand, commentaire), PDF, montant du marché (`GET /api/affaires/{id}/marche` = dossier travaux + avenants validés) ; devis de base verrouillé (409) une fois en chantier
   - [ ] 14. Marge prévue (déboursé sec) vs réelle (dépenses saisies), par lot
   - [ ] 15. Coexistence ProGBat : export CSV du devis (format ProGBat à confirmer : bloqué sans exemple de fichier)
   - [ ] 16. Plusieurs utilisateurs par entreprise : invitations, rôles (gérant, chargé d'études, conducteur), nom de l'entreprise
@@ -107,6 +107,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Ordre des lignes : choisi par l'utilisateur (champ `ordre`), utilisé tel quel dans les deux vues (pièce et lot) ; plus de tri automatique par lot dans la vue par pièce.
 - Gammes : une ligne est « incluse » si elle est commune ou de la gamme retenue de sa pièce (ou de l'affaire si générale). Tous les totaux, la TVA, le PDF, la vue par lot et les €/m² constatés ne comptent que les lignes incluses.
 - JSON : Spring Boot 4 fournit Jackson 3 (`tools.jackson.databind.json.JsonMapper`), pas `com.fasterxml.jackson.databind`.
+- Devis de base = lignes sans avenant (`findByAffaireIdAndAvenantIsNullOrderByOrdreAsc`). En chantier (`version_chantier_id` non nul), création / modification / suppression / réordonnancement des lignes de base → 409 ; les lignes d'avenant ne sont modifiables que si l'avenant est en BROUILLON. `Totaux.de(...)` calcule HT / TVA par taux / TTC pour tout ensemble de lignes.
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions

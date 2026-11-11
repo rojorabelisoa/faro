@@ -6,6 +6,7 @@ import type {
 import { useSession } from '../ApiContext'
 import FormulaireAffaire from '../components/FormulaireAffaire'
 import { nomFichier, telecharger } from '../components/telecharger'
+import Avenants from '../components/Avenants'
 import Versions from '../components/Versions'
 import Visite from '../components/Visite'
 import {
@@ -153,7 +154,11 @@ export default function AffairePage() {
           </div>
         </div>
 
+        {affaire.versionChantierId && (
+          <p className="info">Affaire en chantier : le devis est figé (dossier travaux). Les changements passent par un avenant.</p>
+        )}
         <TableDevis
+          fige={!!affaire.versionChantierId}
           devis={devis}
           pieces={pieces}
           lots={lots}
@@ -180,7 +185,7 @@ export default function AffairePage() {
           })}
         />
 
-        <FormulaireLigne
+        {!affaire.versionChantierId && <FormulaireLigne
           key={edition?.id ?? 'nouvelle'}
           ligne={edition}
           pieces={pieces}
@@ -199,10 +204,12 @@ export default function AffairePage() {
             await api.createLigneDepuisOuvrage(affaire.id, { ouvrageId: ouvrage.id, pieceId, quantite })
             await reload()
           })}
-        />
+        />}
       </section>
 
       <Versions affaire={affaire} onChantier={reload} />
+
+      {affaire.versionChantierId && <Avenants affaire={affaire} pieces={pieces} lots={lots} />}
     </>
   )
 }
@@ -389,7 +396,8 @@ export function deplacer(lignes: Ligne[], groupe: Ligne[], ligne: Ligne, sens: -
   return ids
 }
 
-function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, onDelete, onSaveToLibrary }: {
+function TableDevis({ fige, devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, onDelete, onSaveToLibrary }: {
+  fige: boolean
   devis: Devis
   pieces: Piece[]
   lots: Lot[]
@@ -432,7 +440,7 @@ function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, 
               {groupe.gammes && (
                 <span className="gammes" role="group" aria-label={`Gamme ${groupe.titre}`}>
                   {(Object.keys(LIBELLES_GAMME) as Gamme[]).map((gamme) => (
-                    <button key={gamme} aria-pressed={groupe.gammeChoisie === gamme}
+                    <button key={gamme} aria-pressed={groupe.gammeChoisie === gamme} disabled={fige}
                       onClick={() => void onChoisirGamme(groupe.pieceId ?? null, gamme)}>
                       {LIBELLES_GAMME[gamme]} {formatEuros(groupe.gammes![gamme])}
                     </button>
@@ -457,6 +465,11 @@ function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, 
               <td className="nombre">{formatTaux(ligne.tauxTva)}</td>
               <td className="nombre">{formatEuros(ligne.montantHt)}</td>
               <td className="actions-ligne">
+                {fige ? (!ligne.ouvrageId && (
+                  <button onClick={() => void onSaveToLibrary(ligne)} title="Réutiliser cet ouvrage dans d'autres devis">
+                    → Bibliothèque
+                  </button>
+                )) : <>
                 <button aria-label={`Monter ${ligne.designation}`} disabled={index === 0}
                   onClick={() => { const ids = deplacer(devis.lignes, groupe.lignes, ligne, -1); if (ids) void onMove(ids) }}>↑</button>
                 <button aria-label={`Descendre ${ligne.designation}`} disabled={index === groupe.lignes.length - 1}
@@ -469,6 +482,7 @@ function TableDevis({ devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, 
                 )}
                 <button className="danger" aria-label={`Supprimer ${ligne.designation}`}
                   onClick={() => void onDelete(ligne)}>Supprimer</button>
+                </>}
               </td>
             </tr>
           ))}
