@@ -48,3 +48,12 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image backend
+        run: docker build -t faro-backend backend
+      - name: Image frontend
+        run: docker build --build-arg VITE_OIDC_AUTHORITY=https://auth.example.fr/realms/faro -t faro-frontend frontend

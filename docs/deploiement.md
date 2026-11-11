@@ -68,8 +68,8 @@ Vérifié (session de développement, sans domaine ni HTTPS) : la stack de produ
 la création d'une affaire, le proxy `/api`, le rechargement des pages de l'application, la validation des jetons
 (clés lues en interne, émetteur public vérifié).
 
-Non vérifié ici : Caddy avec un vrai domaine (HTTPS), et la construction des images Docker multi-étapes
-(`backend/Dockerfile`, `frontend/Dockerfile`) qui demande l'accès à Maven Central et npm depuis Docker.
+Non vérifié ici : Caddy avec un vrai domaine (HTTPS). La construction des images Docker multi-étapes
+(`backend/Dockerfile`, `frontend/Dockerfile`) est vérifiée par la CI GitHub (job `docker`).
 
 Avant d'ouvrir à des clients :
 - limiter le débit des requêtes publiques (`/api/public/*` de l'espace client), par exemple dans Caddy ;
