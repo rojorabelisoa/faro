@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import type { Lot, Ouvrage } from '../api'
+import type { ImportResultat, Lot, Ouvrage } from '../api'
 import { useSession } from '../ApiContext'
 import { formatEuros, formatTaux, parseNombre, TAUX_TVA, UNITES } from '../format'
 
@@ -9,6 +9,7 @@ export default function BibliothequePage() {
   const [lots, setLots] = useState<Lot[]>([])
   const [recherche, setRecherche] = useState('')
   const [edition, setEdition] = useState<Ouvrage | null>(null)
+  const [resultatImport, setResultatImport] = useState<ImportResultat | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(
@@ -57,6 +58,31 @@ export default function BibliothequePage() {
     }
   }
 
+  async function exporter() {
+    try {
+      const url = URL.createObjectURL(await api.exportOuvrages())
+      const lien = document.createElement('a')
+      lien.href = url
+      lien.download = 'bibliotheque-faro.csv'
+      lien.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  async function importer(fichier: File | undefined) {
+    if (!fichier) return
+    try {
+      const resultat = await api.importOuvrages(fichier)
+      setResultatImport(resultat)
+      setError(null)
+      if (resultat.erreurs.length === 0) await load(recherche.trim())
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   async function remove(ouvrage: Ouvrage) {
     try {
       await api.deleteOuvrage(ouvrage.id)
@@ -78,6 +104,38 @@ export default function BibliothequePage() {
       </div>
       <p className="sous-titre">Vos prix de référence, réutilisables dans tous les devis.</p>
       {error && <p role="alert" className="erreur">{error}</p>}
+
+      <section className="carte">
+        <h3>Importer depuis Excel</h3>
+        <p className="discret">
+          Enregistrez votre tableau au format « CSV (séparateur : point-virgule) » avec les colonnes
+          <code> lot ; designation ; unite ; prix_unitaire_ht ; tva ; description</code>.
+          Le lot est son code (07, 10…). Un ouvrage déjà présent (même lot, même désignation) est mis à jour :
+          réimporter le fichier suffit pour actualiser les prix. L'export ci-dessous sert de modèle.
+        </p>
+        <div className="en-ligne">
+          <label className="bouton">
+            Importer un fichier CSV
+            <input type="file" accept=".csv,text/csv" className="sr-only"
+              onChange={(e) => { void importer(e.target.files?.[0]); e.target.value = '' }} />
+          </label>
+          <button onClick={() => void exporter()}>Exporter la bibliothèque (CSV)</button>
+        </div>
+        {resultatImport && (resultatImport.erreurs.length === 0 ? (
+          <p role="status" className="info">
+            {resultatImport.importes} ouvrage(s) ajouté(s), {resultatImport.misAJour} mis à jour.
+          </p>
+        ) : (
+          <div role="alert" className="erreur">
+            <p>Rien n'a été importé : corrigez ces lignes puis réessayez.</p>
+            <ul>
+              {resultatImport.erreurs.map((erreur) => (
+                <li key={erreur.ligne + erreur.message}>Ligne {erreur.ligne} : {erreur.message}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
 
       <form key={edition?.id ?? 'nouveau'} className="carte formulaire-ligne" onSubmit={save}
         aria-label={edition ? "Modifier l'ouvrage" : 'Nouvel ouvrage'}>

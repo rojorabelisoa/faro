@@ -49,6 +49,8 @@ button { cursor: pointer; }
 button:hover { border-color: var(--accent); }
 button.primaire { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
 button.danger { color: var(--danger); }
+label.bouton { display: inline-block; cursor: pointer; color: var(--texte); border: 1px solid var(--bord); border-radius: 6px; padding: 0.4rem 0.7rem; background: var(--surface); }
+label.bouton:hover, label.bouton:focus-within { border-color: var(--accent); }
 button.lien { border: none; padding: 0; background: transparent; }
 button.lien:hover { text-decoration: underline; }
 .pastilles li.active { border-color: var(--accent); }

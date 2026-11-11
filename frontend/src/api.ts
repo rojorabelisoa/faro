@@ -122,6 +122,12 @@ export interface Ouvrage {
 
 export type OuvrageInput = Omit<Ouvrage, 'id'>
 
+export interface ImportResultat {
+  importes: number
+  misAJour: number
+  erreurs: { ligne: number; message: string }[]
+}
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -156,6 +162,17 @@ async function download(token: string, path: string): Promise<Blob> {
   const response = await fetch(`${apiUrl}${path}`, { headers: { Authorization: `Bearer ${token}` } })
   if (!response.ok) throw new ApiError(response.status, `Erreur API ${response.status}`)
   return response.blob()
+}
+
+/** Import tout-ou-rien : la réponse (200 ou 400) détaille les erreurs ligne par ligne. */
+async function importCsv(token: string, fichier: File): Promise<ImportResultat> {
+  const form = new FormData()
+  form.append('fichier', fichier)
+  const response = await fetch(`${apiUrl}/api/ouvrages/import`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
+  })
+  if (response.ok || response.status === 400) return response.json()
+  throw new ApiError(response.status, `Erreur API ${response.status}`)
 }
 
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) })
@@ -204,6 +221,8 @@ export function createApi(token: string) {
     createOuvrage: (input: OuvrageInput) => request<Ouvrage>(token, '/api/ouvrages', json('POST', input)),
     updateOuvrage: (id: string, input: OuvrageInput) =>
       request<Ouvrage>(token, `/api/ouvrages/${id}`, json('PUT', input)),
+    exportOuvrages: () => download(token, '/api/ouvrages/export.csv'),
+    importOuvrages: (fichier: File) => importCsv(token, fichier),
     deleteOuvrage: (id: string) => request<void>(token, `/api/ouvrages/${id}`, { method: 'DELETE' }),
   }
 }
