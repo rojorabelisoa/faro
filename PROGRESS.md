@@ -62,7 +62,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 12. Versions figées du devis (migration V10, JSON complet du devis + en-tête dans `devis_version.contenu`, numérotées, PDF par version) et passage en chantier (`POST /api/affaires/{id}/chantier` : fige « Dossier travaux », statut CHANTIER, `affaire.version_chantier_id` = référence pour avenants et marge)
   - [x] 13. Avenants (migration V11) : lignes de devis rattachées à un avenant (`ligne_devis.avenant_id`), cycle BROUILLON → ENVOYE (contenu figé en JSON) → VALIDE / REFUSE (qui, quand, commentaire), PDF, montant du marché (`GET /api/affaires/{id}/marche` = dossier travaux + avenants validés) ; devis de base verrouillé (409) une fois en chantier
   - [x] 14. Marge (migration V12) : déboursé sec unitaire facultatif sur lignes et ouvrages (copié depuis la bibliothèque, colonne CSV `debourse_unitaire_ht`), dépenses réelles par lot (`/api/affaires/{id}/depenses`), `GET /api/affaires/{id}/marge` : vendu (lignes retenues + avenants validés), coût prévu / réel, marges et taux par lot et au total, lignes sans déboursé signalées
-  - [ ] 15. Coexistence ProGBat : export CSV du devis (format ProGBat à confirmer : bloqué sans exemple de fichier)
+  - [x] 15. Export CSV « Excel » du devis (`GET /api/affaires/{id}/devis.csv`, lignes retenues, lot / pièce / désignation / quantité / PU / TVA / montant / gamme). Format d'import ProGBat : BLOQUÉ, à adapter dès qu'on a un fichier exemple
   - [ ] 16. Plusieurs utilisateurs par entreprise : invitations, rôles (gérant, chargé d'études, conducteur), nom de l'entreprise
   - [ ] 17. Espace client : lien sécurisé pour consulter le devis, choisir les options, valider les avenants
   - [ ] 18. Déploiement : Dockerfiles + compose de production + doc (mise en ligne réelle bloquée : hébergeur et comptes à choisir)
@@ -113,4 +113,6 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 ## Bloquants / questions
 
 - Questions de cadrage du MVP : voir `docs/brainstorm.md`.
+- ProGBat : obtenir un exemple de fichier d'import / export ProGBat (devis et bibliothèque) pour adapter les formats CSV.
+- Ratios d'estimation : faire valider / remplacer les valeurs indicatives par la chargée d'études.
 - Un fournisseur OIDC est-il imposé en production (Google, Entra, Auth0…) ? Keycloak par défaut en attendant.

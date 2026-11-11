@@ -148,6 +148,10 @@ export default function AffairePage() {
           <div className="en-ligne">
             <button onClick={() => void telechargerPdf('PIECE')}>PDF client (par pièce)</button>
             <button onClick={() => void telechargerPdf('LOT')}>PDF chantier (par lot)</button>
+            <button title="Pour Excel ou un autre logiciel (ProGBat…)" onClick={() => void run(async () =>
+              telecharger(await api.devisCsv(affaire.id), `devis-${nomFichier(affaire.nom)}.csv`))}>
+              Export Excel (CSV)
+            </button>
           </div>
           <div className="bascule" role="group" aria-label="Présentation du devis">
             <button aria-pressed={vue === 'piece'} onClick={() => setVue('piece')}>Par pièce</button>

@@ -30,10 +30,20 @@ public class DevisController {
 
     private final DevisService devisService;
     private final DevisPdfService pdfService;
+    private final DevisCsvService csvService;
 
-    public DevisController(DevisService devisService, DevisPdfService pdfService) {
+    public DevisController(DevisService devisService, DevisPdfService pdfService, DevisCsvService csvService) {
         this.devisService = devisService;
         this.pdfService = pdfService;
+        this.csvService = csvService;
+    }
+
+    @GetMapping(value = "/devis.csv", produces = "text/csv")
+    public ResponseEntity<byte[]> csv(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId) {
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename("devis.csv").build().toString())
+            .contentType(new MediaType("text", "csv", java.nio.charset.StandardCharsets.UTF_8))
+            .body(csvService.csv(organisation, affaireId));
     }
 
     @GetMapping("/devis")

@@ -265,6 +265,25 @@ class DevisApiTest {
     }
 
     @Test
+    void devisIsExportedAsAnExcelCsvWithoutUnchosenOptions() throws Exception {
+        addLigne(null, "01", "Protection; sols", "forfait", "1", "350.00", null).andExpect(status().isCreated());
+        addLigne(sdb, "10", "Carrelage sol", "m²", "4.25", "72.40", "10").andExpect(status().isCreated());
+        mockMvc.perform(post("/api/affaires/" + affaireId + "/lignes").with(user(SUB))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"pieceId\": \"%s\", \"lotId\": \"%s\", \"designation\": \"Zellige\", \"unite\": \"m²\", \"quantite\": 2, \"prixUnitaireHt\": 300, \"gamme\": \"PREMIUM\"}"
+                    .formatted(sdb, lots.get("10"))))
+            .andExpect(status().isCreated());
+
+        String csv = new String(mockMvc.perform(get("/api/affaires/" + affaireId + "/devis.csv").with(user(SUB)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(csv).contains("lot_code;lot;piece;designation;description;unite;quantite;prix_unitaire_ht;tva;montant_ht;gamme",
+            "01;Installation de chantier / Protections;Général;\"Protection; sols\";;forfait;1;350;10;350;",
+            "10;Carrelage / Faïence;Salle de bains;Carrelage sol;;m²;4,25;72,4;10;307,7;")
+            .doesNotContain("Zellige");
+    }
+
+    @Test
     void rejectsInvalidLines() throws Exception {
         addLigne(cuisine, "07", "Évier", "U", "1", "420", "7").andExpect(status().isBadRequest());
         addLigne(cuisine, "07", "Évier", "U", "-1", "420", null).andExpect(status().isBadRequest());

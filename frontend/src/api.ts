@@ -381,6 +381,7 @@ export function createApi(token: string) {
     deleteLot: (id: string) => request<void>(token, `/api/lots/${id}`, { method: 'DELETE' }),
 
     devis: (affaireId: string) => request<Devis>(token, `/api/affaires/${affaireId}/devis`),
+    devisCsv: (affaireId: string) => download(token, `/api/affaires/${affaireId}/devis.csv`),
     devisPdf: (affaireId: string, vue: 'PIECE' | 'LOT') =>
       download(token, `/api/affaires/${affaireId}/devis.pdf?vue=${vue}`),
     createLigne: (affaireId: string, input: LigneInput) =>
