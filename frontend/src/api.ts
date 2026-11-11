@@ -50,14 +50,47 @@ export interface Piece {
   hauteurM: number | null
   /** Calculée par le serveur : périmètre × hauteur. */
   surfaceMursM2: number | null
+  typePiece: TypePiece | null
+  niveauTravaux: NiveauTravaux | null
   ordre: number
 }
+
+export interface Estimation {
+  pieces: {
+    pieceId: string
+    nom: string
+    typePiece: TypePiece | null
+    niveauTravaux: NiveauTravaux | null
+    surfaceM2: number | null
+    minHt: number | null
+    maxHt: number | null
+    manque: string | null
+  }[]
+  totalMinHt: number
+  totalMaxHt: number
+  devisHt: number
+}
+
+export interface Ratio {
+  id: string
+  typePiece: TypePiece
+  niveauTravaux: NiveauTravaux
+  prixMinM2: number
+  prixMaxM2: number
+  constate: { pieces: number; minM2: number; medianeM2: number; maxM2: number } | null
+}
+
+export type TypePiece = 'CUISINE' | 'SALLE_DE_BAINS' | 'WC' | 'SEJOUR' | 'CHAMBRE' | 'ENTREE_DEGAGEMENT'
+  | 'BUANDERIE_CELLIER' | 'AUTRE'
+export type NiveauTravaux = 'RAFRAICHISSEMENT' | 'RENOVATION' | 'RENOVATION_LOURDE'
 
 export interface PieceInput {
   nom: string
   surfaceM2: number | null
   perimetreMl: number | null
   hauteurM: number | null
+  typePiece: TypePiece | null
+  niveauTravaux: NiveauTravaux | null
   ordre?: number
 }
 
@@ -276,6 +309,11 @@ export function createApi(token: string) {
     photo: (affaireId: string, id: string) => download(token, `/api/affaires/${affaireId}/photos/${id}`),
     deletePhoto: (affaireId: string, id: string) =>
       request<void>(token, `/api/affaires/${affaireId}/photos/${id}`, { method: 'DELETE' }),
+
+    estimation: (affaireId: string) => request<Estimation>(token, `/api/affaires/${affaireId}/estimation`),
+    ratios: () => request<Ratio[]>(token, '/api/ratios'),
+    updateRatio: (id: string, input: { prixMinM2: number; prixMaxM2: number }) =>
+      request<void>(token, `/api/ratios/${id}`, json('PUT', input)),
 
     exportOuvrages: () => download(token, '/api/ouvrages/export.csv'),
     importOuvrages: (fichier: File) => importCsv(token, fichier),

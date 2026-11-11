@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import type { Api, Devis } from '../api'
+import type { Api, Devis, Piece } from '../api'
 import { SessionContext } from '../ApiContext'
 import AffairePage, { deplacer, metres } from './AffairePage'
 
@@ -11,9 +11,9 @@ const LOTS = [
   { id: 'l07', code: '07', nom: 'Plomberie', ordre: 7 },
   { id: 'l10', code: '10', nom: 'Carrelage', ordre: 10 },
 ]
-const PIECES = [
-  { id: 'cuisine', nom: 'Cuisine', surfaceM2: 12, perimetreMl: 14, hauteurM: 2.5, surfaceMursM2: 35, ordre: 1 },
-  { id: 'sdb', nom: 'Salle de bains', surfaceM2: null, perimetreMl: null, hauteurM: null, surfaceMursM2: null, ordre: 2 },
+const PIECES: Piece[] = [
+  { id: 'cuisine', nom: 'Cuisine', surfaceM2: 12, perimetreMl: 14, hauteurM: 2.5, surfaceMursM2: 35, typePiece: 'CUISINE', niveauTravaux: 'RENOVATION', ordre: 1 },
+  { id: 'sdb', nom: 'Salle de bains', surfaceM2: null, perimetreMl: null, hauteurM: null, surfaceMursM2: null, typePiece: null, niveauTravaux: null, ordre: 2 },
 ]
 const ligne = (id: string, pieceId: string | null, lotId: string, designation: string, montantHt: number) => ({
   id, pieceId, lotId, ouvrageId: null, designation, description: null, unite: 'U', quantite: 1,
@@ -52,6 +52,15 @@ function renderPage() {
     ouvrages: vi.fn().mockResolvedValue([]),
     createLigne: vi.fn().mockResolvedValue({}),
     visite: vi.fn().mockResolvedValue({ observations: [], photos: [] }),
+    estimation: vi.fn().mockResolvedValue({
+      pieces: [
+        { pieceId: 'cuisine', nom: 'Cuisine', typePiece: 'CUISINE', niveauTravaux: 'RENOVATION', surfaceM2: 12,
+          minHt: 8400, maxHt: 15600, manque: null },
+        { pieceId: 'sdb', nom: 'Salle de bains', typePiece: null, niveauTravaux: null, surfaceM2: null,
+          minHt: null, maxHt: null, manque: 'surface' },
+      ],
+      totalMinHt: 8400, totalMaxHt: 15600, devisHt: 1630.2,
+    }),
   }
   const me = { id: '1', subject: 's', email: null, displayName: 'Demo', roles: [], organisation: { id: 'o', nom: 'X' } }
   render(
@@ -135,5 +144,15 @@ describe('AffairePage – métrés', () => {
 
     expect(within(form).getByLabelText('Quantité')).toHaveValue('35')
     expect(within(form).getByLabelText('Unité')).toHaveValue('m²')
+  })
+})
+
+describe('AffairePage – estimation', () => {
+  it('affiche la fourchette, les pièces incomplètes et compare au devis', async () => {
+    renderPage()
+    const estimation = await screen.findByRole('region', { name: 'Estimation rapide' })
+    expect(texte(estimation.querySelector('.fourchette')?.textContent ?? null)).toBe('8 400,00 € – 15 600,00 € HT')
+    expect(within(estimation).getByText('surface manquante')).toBeInTheDocument()
+    expect(within(estimation).getByText(/hors de la fourchette/)).toBeInTheDocument()
   })
 })

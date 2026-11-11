@@ -144,3 +144,10 @@ label.en-ligne { display: flex; }
 .vignette { margin: 0; }
 .vignette img, .vignette-vide { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: var(--bord); display: block; }
 .vignette figcaption { font-size: 0.8rem; color: var(--discret); display: flex; justify-content: space-between; gap: 0.25rem; }
+
+.fourchette { font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem; }
+.estimation-pieces { list-style: none; padding: 0; margin: 0 0 0.5rem; }
+.estimation-pieces li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.3rem 0; border-bottom: 1px solid var(--bord); }
+.avertissement { color: #b54708; }
+@media (prefers-color-scheme: dark) { .avertissement { color: #fdb022; } }
+.formulaire-piece .en-ligne select { max-width: 11rem; }

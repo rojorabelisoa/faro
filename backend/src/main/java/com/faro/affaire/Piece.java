@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,6 +39,14 @@ public class Piece {
 
     @Column(name = "hauteur_m")
     private BigDecimal hauteurM;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_piece")
+    private TypePiece typePiece;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "niveau_travaux")
+    private NiveauTravaux niveauTravaux;
 
     @Column(nullable = false)
     private int ordre;
@@ -95,6 +105,22 @@ public class Piece {
     public BigDecimal getSurfaceMursM2() {
         return perimetreMl != null && hauteurM != null
             ? perimetreMl.multiply(hauteurM).setScale(2, java.math.RoundingMode.HALF_UP) : null;
+    }
+
+    public TypePiece getTypePiece() {
+        return typePiece;
+    }
+
+    public void setTypePiece(TypePiece typePiece) {
+        this.typePiece = typePiece;
+    }
+
+    public NiveauTravaux getNiveauTravaux() {
+        return niveauTravaux;
+    }
+
+    public void setNiveauTravaux(NiveauTravaux niveauTravaux) {
+        this.niveauTravaux = niveauTravaux;
     }
 
     public int getOrdre() {

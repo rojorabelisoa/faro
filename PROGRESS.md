@@ -57,7 +57,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 7. Écrans manquants : modifier/supprimer une affaire (+ e-mail, téléphone, notes), modifier une pièce (clic sur la pastille), page `/lots`, modifier un ouvrage (+ descriptif)
   - [x] 8. Import / export CSV de la bibliothèque (`POST /api/ouvrages/import`, `GET /api/ouvrages/export.csv`) : CSV Excel FR (`;`, UTF-8 ou Windows-1252, « 72,40 € »), en-têtes souples, tout-ou-rien avec erreurs par ligne, réimport = mise à jour des prix (même lot + désignation). Format ProGBat : à confirmer avec un exemple
   - [x] 9. CR de visite : observations et photos par pièce (migration V7, photos en base `bytea`, réduites à 1600 px JPEG par le navigateur, `capture` caméra sur mobile), PDF du compte-rendu (`GET /api/affaires/{id}/visite.pdf`) avec photos et métrés
-  - [ ] 10. Estimation rapide en fourchette (ratios €/m² par type de pièce, recalés sur les devis existants)
+  - [x] 10. Estimation rapide en fourchette : type de pièce + niveau de travaux sur la pièce (type deviné depuis le nom), ratios €/m² min/max par organisation (migration V8, 24 ratios INDICATIFS à faire valider par la chargée d'études), page `/ratios` avec €/m² constatés dans les devis (médiane), comparaison estimation / devis détaillé
   - [ ] 11. Options Eco / Standard / Premium (gamme par ligne, choix par pièce, comparaison des totaux)
   - [ ] 12. Versions figées du devis et passage au chantier (dossier travaux transmis au conducteur)
   - [ ] 13. Travaux supplémentaires / avenants : chiffrage, validation client, historique opposable

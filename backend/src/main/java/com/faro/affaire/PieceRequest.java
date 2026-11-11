@@ -13,5 +13,7 @@ public record PieceRequest(
         @DecimalMin("0") @Digits(integer = 6, fraction = 2) BigDecimal surfaceM2,
         @DecimalMin("0") @Digits(integer = 6, fraction = 2) BigDecimal perimetreMl,
         @DecimalMin("0") @Digits(integer = 3, fraction = 2) BigDecimal hauteurM,
+        TypePiece typePiece,
+        NiveauTravaux niveauTravaux,
         Integer ordre) {
 }

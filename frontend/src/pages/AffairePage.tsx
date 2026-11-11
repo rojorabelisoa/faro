@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import type { Affaire, Devis, Ligne, LigneInput, Lot, Ouvrage, Piece, PieceInput, StatutAffaire } from '../api'
+import type {
+  Affaire, Devis, Ligne, LigneInput, Lot, NiveauTravaux, Ouvrage, Piece, PieceInput, StatutAffaire, TypePiece,
+} from '../api'
 import { useSession } from '../ApiContext'
 import FormulaireAffaire from '../components/FormulaireAffaire'
 import { nomFichier, telecharger } from '../components/telecharger'
 import Visite from '../components/Visite'
 import {
-  formatEuros, formatNombre, formatTaux, LIBELLES_STATUT, LIBELLES_TYPE_BIEN, parseNombre, TAUX_TVA, UNITES,
+  devinerTypePiece, formatEuros, formatNombre, formatTaux, LIBELLES_NIVEAU, LIBELLES_STATUT, LIBELLES_TYPE_BIEN,
+  LIBELLES_TYPE_PIECE, parseNombre, TAUX_TVA, UNITES,
 } from '../format'
+import Estimation from '../components/Estimation'
 
 type Vue = 'piece' | 'lot'
 
@@ -133,6 +137,8 @@ export default function AffairePage() {
 
       <Visite affaire={affaire} pieces={pieces} />
 
+      <Estimation affaireId={affaire.id} version={devis} />
+
       <section className="carte">
         <div className="titre-section">
           <h2>Devis</h2>
@@ -254,6 +260,8 @@ function FormulairePiece({ piece, libelle, onSubmit, onCancel }: {
   const [surface, setSurface] = useState(enTexte(piece?.surfaceM2))
   const [perimetre, setPerimetre] = useState(enTexte(piece?.perimetreMl))
   const [hauteur, setHauteur] = useState(enTexte(piece?.hauteurM ?? (piece ? null : 2.5)))
+  const [typePiece, setTypePiece] = useState<string>(piece?.typePiece ?? '')
+  const [niveau, setNiveau] = useState<string>(piece?.niveauTravaux ?? (piece ? '' : 'RENOVATION'))
   const [longueur, setLongueur] = useState('')
   const [largeur, setLargeur] = useState('')
 
@@ -271,9 +279,11 @@ function FormulairePiece({ piece, libelle, onSubmit, onCancel }: {
     event.preventDefault()
     const ok = await onSubmit({
       nom: nom.trim(), surfaceM2: enNombre(surface), perimetreMl: enNombre(perimetre), hauteurM: enNombre(hauteur),
+      typePiece: (typePiece || null) as TypePiece | null, niveauTravaux: (niveau || null) as NiveauTravaux | null,
     })
     if (ok && !piece) {
       setNom('')
+      setTypePiece('')
       setSurface('')
       setPerimetre('')
       setLongueur('')
@@ -284,8 +294,19 @@ function FormulairePiece({ piece, libelle, onSubmit, onCancel }: {
   return (
     <form className="formulaire-piece" onSubmit={submit} aria-label={libelle}>
       <div className="en-ligne">
-        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Cuisine, SDB, Chambre 1…" required
-          aria-label="Nom de la pièce" />
+        <input value={nom} required aria-label="Nom de la pièce" placeholder="Cuisine, SDB, Chambre 1…"
+          onChange={(e) => {
+            setNom(e.target.value)
+            if (!piece) setTypePiece(devinerTypePiece(e.target.value) ?? '')
+          }} />
+        <select value={typePiece} onChange={(e) => setTypePiece(e.target.value)} aria-label="Type de pièce">
+          <option value="">Type…</option>
+          {Object.entries(LIBELLES_TYPE_PIECE).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <select value={niveau} onChange={(e) => setNiveau(e.target.value)} aria-label="Niveau de travaux">
+          <option value="">Niveau…</option>
+          {Object.entries(LIBELLES_NIVEAU).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
         <input value={longueur} onChange={(e) => { setLongueur(e.target.value); depuisDimensions(e.target.value, largeur) }}
           placeholder="Long. m" inputMode="decimal" className="tres-court" aria-label="Longueur en m" />
         <span className="discret">×</span>

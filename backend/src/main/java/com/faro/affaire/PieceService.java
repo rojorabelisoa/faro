@@ -41,6 +41,8 @@ public class PieceService {
         Piece piece = new Piece(affaire, request.nom(), request.surfaceM2(), ordre);
         piece.setPerimetreMl(request.perimetreMl());
         piece.setHauteurM(request.hauteurM());
+        piece.setTypePiece(request.typePiece());
+        piece.setNiveauTravaux(request.niveauTravaux());
         return repository.save(piece);
     }
 
@@ -50,6 +52,8 @@ public class PieceService {
         piece.setSurfaceM2(request.surfaceM2());
         piece.setPerimetreMl(request.perimetreMl());
         piece.setHauteurM(request.hauteurM());
+        piece.setTypePiece(request.typePiece());
+        piece.setNiveauTravaux(request.niveauTravaux());
         if (request.ordre() != null) {
             piece.setOrdre(request.ordre());
         }

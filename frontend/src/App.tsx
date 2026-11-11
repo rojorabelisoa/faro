@@ -7,6 +7,7 @@ import AffairesPage from './pages/AffairesPage'
 import AffairePage from './pages/AffairePage'
 import BibliothequePage from './pages/BibliothequePage'
 import LotsPage from './pages/LotsPage'
+import RatiosPage from './pages/RatiosPage'
 
 export default function App() {
   const auth = useAuth()
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="/affaires/:id" element={<AffairePage />} />
             <Route path="/bibliotheque" element={<BibliothequePage />} />
             <Route path="/lots" element={<LotsPage />} />
+            <Route path="/ratios" element={<RatiosPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>
@@ -81,6 +83,7 @@ function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: (
           <NavLink to="/" end>Affaires</NavLink>
           <NavLink to="/bibliotheque">Bibliothèque</NavLink>
           <NavLink to="/lots">Lots</NavLink>
+          <NavLink to="/ratios">Ratios</NavLink>
         </nav>
         <span className="utilisateur">
           {me.displayName ?? me.email ?? me.subject} · {me.organisation.nom}
