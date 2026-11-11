@@ -35,6 +35,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/health", "/actuator/health/**").permitAll()
+                // Espace client : sans compte, protégé par le code secret (32 octets aléatoires) du lien.
+                .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("admin")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2

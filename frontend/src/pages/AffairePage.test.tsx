@@ -53,6 +53,7 @@ function renderPage(devis: Devis = DEVIS) {
     devis: vi.fn().mockResolvedValue(devis),
     choisirGamme: vi.fn().mockResolvedValue(undefined),
     versions: vi.fn().mockResolvedValue([]),
+    liensClient: vi.fn().mockResolvedValue([]),
     marge: vi.fn().mockResolvedValue({ lots: [], total: { venduHt: 0, coutPrevuHt: 0, coutReelHt: 0, margePrevueHt: 0, margeReelleHt: 0, tauxMargePrevue: null, tauxMargeReelle: null, lignesSansDebourse: 0 }, depenses: [] }),
     ouvrages: vi.fn().mockResolvedValue([]),
     createLigne: vi.fn().mockResolvedValue({}),

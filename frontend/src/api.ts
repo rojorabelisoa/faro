@@ -300,6 +300,58 @@ export interface Marge {
   depenses: Depense[]
 }
 
+export interface EspaceClient {
+  entreprise: string
+  affaire: string
+  adresse: string | null
+  statut: StatutAffaire
+  chantier: boolean
+  devis: Devis
+  lots: { id: string; code: string; nom: string }[]
+  avenants: Avenant[]
+  marche: Marche
+}
+
+export interface LienClient {
+  id: string
+  code: string
+  createdAt: string
+  derniereVisite: string | null
+}
+
+/** API de l'espace client : sans compte, le code secret du lien fait office d'accès. */
+export function createPublicApi(code: string) {
+  const base = `/api/public/client/${encodeURIComponent(code)}`
+  const appel = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
+    const response = await fetch(`${apiUrl}${base}${path}`, {
+      ...init,
+      headers: init.body ? { 'Content-Type': 'application/json' } : undefined,
+    })
+    if (!response.ok) {
+      let message = response.status === 404 ? 'Ce lien n\'est plus valide. Demandez-en un nouveau à votre entreprise.'
+        : `Erreur ${response.status}`
+      try {
+        const problem = await response.json()
+        if (problem?.detail && response.status !== 404) message = problem.detail
+      } catch {
+        // corps vide
+      }
+      throw new ApiError(response.status, message)
+    }
+    if (response.status === 204) return undefined as T
+    return (response.headers.get('Content-Type')?.includes('json') ? response.json() : response.blob()) as Promise<T>
+  }
+  return {
+    espace: () => appel<EspaceClient>(''),
+    choisirGamme: (pieceId: string | null, gamme: Gamme) =>
+      appel<void>(pieceId ? `/pieces/${pieceId}/gamme` : '/gamme', json('PUT', { gamme })),
+    decider: (avenantId: string, input: { decision: 'VALIDE' | 'REFUSE'; nom: string; commentaire: string | null }) =>
+      appel<void>(`/avenants/${avenantId}/decision`, json('POST', input)),
+    devisPdf: () => appel<Blob>('/devis.pdf'),
+    avenantPdf: (avenantId: string) => appel<Blob>(`/avenants/${avenantId}/document.pdf`),
+  }
+}
+
 export interface ImportResultat {
   importes: number
   misAJour: number
@@ -486,6 +538,12 @@ export function createApi(token: string) {
       request<Depense>(token, `/api/affaires/${affaireId}/depenses`, json('POST', input)),
     deleteDepense: (affaireId: string, id: string) =>
       request<void>(token, `/api/affaires/${affaireId}/depenses/${id}`, { method: 'DELETE' }),
+
+    liensClient: (affaireId: string) => request<LienClient[]>(token, `/api/affaires/${affaireId}/acces-client`),
+    creerLienClient: (affaireId: string) =>
+      request<LienClient>(token, `/api/affaires/${affaireId}/acces-client`, { method: 'POST' }),
+    revoquerLienClient: (affaireId: string, id: string) =>
+      request<void>(token, `/api/affaires/${affaireId}/acces-client/${id}`, { method: 'DELETE' }),
 
     exportOuvrages: () => download(token, '/api/ouvrages/export.csv'),
     importOuvrages: (fichier: File) => importCsv(token, fichier),

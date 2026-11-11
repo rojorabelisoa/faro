@@ -64,7 +64,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 14. Marge (migration V12) : déboursé sec unitaire facultatif sur lignes et ouvrages (copié depuis la bibliothèque, colonne CSV `debourse_unitaire_ht`), dépenses réelles par lot (`/api/affaires/{id}/depenses`), `GET /api/affaires/{id}/marge` : vendu (lignes retenues + avenants validés), coût prévu / réel, marges et taux par lot et au total, lignes sans déboursé signalées
   - [x] 15. Export CSV « Excel » du devis (`GET /api/affaires/{id}/devis.csv`, lignes retenues, lot / pièce / désignation / quantité / PU / TVA / montant / gamme). Format d'import ProGBat : BLOQUÉ, à adapter dès qu'on a un fichier exemple
   - [x] 16. Équipe (migration V13) : rôle d'entreprise (GERANT, CHARGE_ETUDES, CONDUCTEUR_TRAVAUX) sur l'utilisateur, invitations par lien à usage unique valable 7 jours (`/api/entreprise/invitations`, `/api/invitations/{code}/accepter`), renommage de l'entreprise, changement de rôle / retrait d'un membre (gérant seulement, au moins un gérant), page `/entreprise` et `/rejoindre/{code}` ; inscription activée dans le realm Keycloak
-  - [ ] 17. Espace client : lien sécurisé pour consulter le devis, choisir les options, valider les avenants
+  - [x] 17. Espace client (migration V14) : lien secret révocable par affaire (`/api/affaires/{id}/acces-client`, code aléatoire 32 octets), page publique `/client/{code}` sans compte (`/api/public/client/{code}` en `permitAll`) : devis par pièce (lignes retenues), choix des gammes avant chantier, PDF, avenants envoyés avec acceptation / refus (« Nom (espace client) »), montant du marché ; dernière visite affichée à l'équipe
   - [ ] 18. Déploiement : Dockerfiles + compose de production + doc (mise en ligne réelle bloquée : hébergeur et comptes à choisir)
   - [ ] 19. Abonnements / facturation (bloqué : compte Stripe ou autre à créer ; au plus, modèle de plans)
   - [x] 20. CI sur toutes les branches (push sur toute branche + PR ; backend via `./mvnw`)
@@ -110,6 +110,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Devis de base = lignes sans avenant (`findByAffaireIdAndAvenantIsNullOrderByOrdreAsc`). En chantier (`version_chantier_id` non nul), création / modification / suppression / réordonnancement des lignes de base → 409 ; les lignes d'avenant ne sont modifiables que si l'avenant est en BROUILLON. `Totaux.de(...)` calcule HT / TVA par taux / TTC pour tout ensemble de lignes.
 - Équipe : seul le gérant administre l'entreprise (403 sinon). Accepter une invitation supprime l'entreprise créée à la première connexion si elle est vide. `EquipeService` recharge l'utilisateur dans sa transaction (celui de `AppUserService.current` est détaché).
 - Realm Keycloak : `registrationAllowed: true` (inscription). Un realm déjà importé n'est pas mis à jour (import IGNORE_EXISTING) : activer « User registration » dans la console Keycloak ou recréer le volume.
+- Espace client : `/api/public/**` est public (SecurityConfig), protégé uniquement par le code secret du lien. Pas encore de limitation de débit (à ajouter avant la mise en production, ex. au niveau du reverse proxy).
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions

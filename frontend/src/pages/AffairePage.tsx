@@ -6,6 +6,7 @@ import type {
 import { useSession } from '../ApiContext'
 import FormulaireAffaire from '../components/FormulaireAffaire'
 import { nomFichier, telecharger } from '../components/telecharger'
+import AccesClient from '../components/AccesClient'
 import Avenants from '../components/Avenants'
 import MargeChantier from '../components/MargeChantier'
 import Versions from '../components/Versions'
@@ -218,6 +219,8 @@ export default function AffairePage() {
       {affaire.versionChantierId && <Avenants affaire={affaire} pieces={pieces} lots={lots} />}
 
       <MargeChantier affaireId={affaire.id} lots={lots} version={devis} />
+
+      <AccesClient affaireId={affaire.id} />
     </>
   )
 }

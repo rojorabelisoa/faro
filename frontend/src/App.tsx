@@ -7,11 +7,18 @@ import AffairesPage from './pages/AffairesPage'
 import AffairePage from './pages/AffairePage'
 import BibliothequePage from './pages/BibliothequePage'
 import LotsPage from './pages/LotsPage'
+import EspaceClientPage from './pages/EspaceClientPage'
 import RatiosPage from './pages/RatiosPage'
 import EntreprisePage from './pages/EntreprisePage'
 import RejoindrePage from './pages/RejoindrePage'
 
 export default function App() {
+  // L'espace client est public : pas de connexion, le code du lien suffit.
+  const espaceClient = window.location.pathname.match(/^\/client\/([^/]+)/)
+  return espaceClient ? <EspaceClientPage code={espaceClient[1]} /> : <Application />
+}
+
+function Application() {
   const auth = useAuth()
   const accessToken = auth.user?.access_token
   const api = useMemo(() => (accessToken ? createApi(accessToken) : null), [accessToken])
