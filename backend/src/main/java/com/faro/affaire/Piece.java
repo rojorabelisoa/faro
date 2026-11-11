@@ -32,6 +32,12 @@ public class Piece {
     @Column(name = "surface_m2")
     private BigDecimal surfaceM2;
 
+    @Column(name = "perimetre_ml")
+    private BigDecimal perimetreMl;
+
+    @Column(name = "hauteur_m")
+    private BigDecimal hauteurM;
+
     @Column(nullable = false)
     private int ordre;
 
@@ -67,6 +73,28 @@ public class Piece {
 
     public void setSurfaceM2(BigDecimal surfaceM2) {
         this.surfaceM2 = surfaceM2;
+    }
+
+    public BigDecimal getPerimetreMl() {
+        return perimetreMl;
+    }
+
+    public void setPerimetreMl(BigDecimal perimetreMl) {
+        this.perimetreMl = perimetreMl;
+    }
+
+    public BigDecimal getHauteurM() {
+        return hauteurM;
+    }
+
+    public void setHauteurM(BigDecimal hauteurM) {
+        this.hauteurM = hauteurM;
+    }
+
+    /** Surface des murs (périmètre × hauteur, ouvertures non déduites), ou null si l'un manque. */
+    public BigDecimal getSurfaceMursM2() {
+        return perimetreMl != null && hauteurM != null
+            ? perimetreMl.multiply(hauteurM).setScale(2, java.math.RoundingMode.HALF_UP) : null;
     }
 
     public int getOrdre() {

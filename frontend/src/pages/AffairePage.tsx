@@ -212,6 +212,9 @@ function Pieces({ pieces, onAdd, onUpdate, onDelete }: {
             <button className="lien" onClick={() => setEdition(piece)} aria-label={`Modifier ${piece.nom}`}>
               {piece.nom}
               {piece.surfaceM2 != null && <span className="discret"> · {formatNombre(piece.surfaceM2)} m²</span>}
+              {piece.surfaceMursM2 != null && (
+                <span className="discret"> · murs {formatNombre(piece.surfaceMursM2)} m²</span>
+              )}
             </button>
             <button className="icone" aria-label={`Supprimer ${piece.nom}`} onClick={() => void onDelete(piece)}>×</button>
           </li>
@@ -236,6 +239,12 @@ function Pieces({ pieces, onAdd, onUpdate, onDelete }: {
   )
 }
 
+const enTexte = (valeur: number | null | undefined) => (valeur != null ? String(valeur).replace('.', ',') : '')
+const enNombre = (saisie: string) => {
+  const valeur = parseNombre(saisie)
+  return Number.isNaN(valeur) ? null : valeur
+}
+
 function FormulairePiece({ piece, libelle, onSubmit, onCancel }: {
   piece?: Piece
   libelle: string
@@ -243,28 +252,69 @@ function FormulairePiece({ piece, libelle, onSubmit, onCancel }: {
   onCancel?: () => void
 }) {
   const [nom, setNom] = useState(piece?.nom ?? '')
-  const [surface, setSurface] = useState(piece?.surfaceM2 != null ? String(piece.surfaceM2).replace('.', ',') : '')
+  const [surface, setSurface] = useState(enTexte(piece?.surfaceM2))
+  const [perimetre, setPerimetre] = useState(enTexte(piece?.perimetreMl))
+  const [hauteur, setHauteur] = useState(enTexte(piece?.hauteurM ?? (piece ? null : 2.5)))
+  const [longueur, setLongueur] = useState('')
+  const [largeur, setLargeur] = useState('')
+
+  /** Pièce rectangulaire : longueur × largeur donne la surface et le périmètre. */
+  function depuisDimensions(l: string, L: string) {
+    const a = enNombre(l)
+    const b = enNombre(L)
+    if (a != null && b != null) {
+      setSurface(enTexte(Math.round(a * b * 100) / 100))
+      setPerimetre(enTexte(Math.round(2 * (a + b) * 100) / 100))
+    }
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault()
-    const surfaceM2 = parseNombre(surface)
-    const ok = await onSubmit({ nom: nom.trim(), surfaceM2: Number.isNaN(surfaceM2) ? null : surfaceM2 })
+    const ok = await onSubmit({
+      nom: nom.trim(), surfaceM2: enNombre(surface), perimetreMl: enNombre(perimetre), hauteurM: enNombre(hauteur),
+    })
     if (ok && !piece) {
       setNom('')
       setSurface('')
+      setPerimetre('')
+      setLongueur('')
+      setLargeur('')
     }
   }
 
   return (
-    <form className="en-ligne" onSubmit={submit} aria-label={libelle}>
-      <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Cuisine, SDB, Chambre 1…" required
-        aria-label="Nom de la pièce" />
-      <input value={surface} onChange={(e) => setSurface(e.target.value)} placeholder="Surface m²"
-        inputMode="decimal" className="court" aria-label="Surface en m²" />
-      {onCancel && <button type="button" onClick={onCancel}>Annuler</button>}
-      <button type="submit">{piece ? 'Enregistrer' : 'Ajouter la pièce'}</button>
+    <form className="formulaire-piece" onSubmit={submit} aria-label={libelle}>
+      <div className="en-ligne">
+        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Cuisine, SDB, Chambre 1…" required
+          aria-label="Nom de la pièce" />
+        <input value={longueur} onChange={(e) => { setLongueur(e.target.value); depuisDimensions(e.target.value, largeur) }}
+          placeholder="Long. m" inputMode="decimal" className="tres-court" aria-label="Longueur en m" />
+        <span className="discret">×</span>
+        <input value={largeur} onChange={(e) => { setLargeur(e.target.value); depuisDimensions(longueur, e.target.value) }}
+          placeholder="Larg. m" inputMode="decimal" className="tres-court" aria-label="Largeur en m" />
+        <span className="discret">ou</span>
+        <input value={surface} onChange={(e) => setSurface(e.target.value)} placeholder="Surface m²"
+          inputMode="decimal" className="court" aria-label="Surface en m²" />
+        <input value={perimetre} onChange={(e) => setPerimetre(e.target.value)} placeholder="Périmètre ml"
+          inputMode="decimal" className="court" aria-label="Périmètre en ml" />
+        <input value={hauteur} onChange={(e) => setHauteur(e.target.value)} placeholder="HSP m"
+          inputMode="decimal" className="tres-court" aria-label="Hauteur sous plafond en m" />
+        {onCancel && <button type="button" onClick={onCancel}>Annuler</button>}
+        <button type="submit">{piece ? 'Enregistrer' : 'Ajouter la pièce'}</button>
+      </div>
     </form>
   )
+}
+
+/** Quantités proposées à partir des métrés de la pièce. */
+export function metres(piece: Piece | undefined): { libelle: string; quantite: number; unite: string }[] {
+  if (!piece) return []
+  const metres = []
+  if (piece.surfaceM2 != null) metres.push({ libelle: 'Sol', quantite: piece.surfaceM2, unite: 'm²' })
+  if (piece.surfaceMursM2 != null) metres.push({ libelle: 'Murs', quantite: piece.surfaceMursM2, unite: 'm²' })
+  if (piece.surfaceM2 != null) metres.push({ libelle: 'Plafond', quantite: piece.surfaceM2, unite: 'm²' })
+  if (piece.perimetreMl != null) metres.push({ libelle: 'Périmètre', quantite: piece.perimetreMl, unite: 'ml' })
+  return metres
 }
 
 interface Groupe {
@@ -482,6 +532,16 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
           Quantité
           <input value={quantite} onChange={(e) => setQuantite(e.target.value)} inputMode="decimal" required />
         </label>
+        {metres(pieces.find((p) => p.id === pieceId)).length > 0 && (
+          <div className="metres" role="group" aria-label="Quantités depuis les métrés">
+            {metres(pieces.find((p) => p.id === pieceId)).map((m) => (
+              <button type="button" key={m.libelle}
+                onClick={() => { setQuantite(enTexte(m.quantite)); setUnite(m.unite) }}>
+                {m.libelle} {formatNombre(m.quantite)} {m.unite}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {!ligne && (

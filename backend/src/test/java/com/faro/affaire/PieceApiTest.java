@@ -87,6 +87,22 @@ class PieceApiTest {
     }
 
     @Test
+    void wallSurfaceIsComputedFromPerimeterAndHeight() throws Exception {
+        String affaireId = createAffaire("pieces-metres");
+        createPiece("pieces-metres", affaireId, """
+            {"nom": "Chambre", "surfaceM2": 12, "perimetreMl": 14.2, "hauteurM": 2.5}
+            """);
+        createPiece("pieces-metres", affaireId, """
+            {"nom": "Cellier", "surfaceM2": 3}
+            """);
+
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/pieces").with(user("pieces-metres")))
+            .andExpect(jsonPath("$[0].surfaceMursM2").value(35.5))
+            .andExpect(jsonPath("$[0].perimetreMl").value(14.2))
+            .andExpect(jsonPath("$[1].surfaceMursM2").doesNotExist());
+    }
+
+    @Test
     void deletingTheAffaireDeletesItsPieces() throws Exception {
         String affaireId = createAffaire("pieces-cascade");
         createPiece("pieces-cascade", affaireId, """

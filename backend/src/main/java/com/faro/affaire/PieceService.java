@@ -38,13 +38,18 @@ public class PieceService {
         int ordre = request.ordre() != null ? request.ordre()
             : repository.findByAffaireIdOrderByOrdreAsc(affaire.getId()).stream()
                 .mapToInt(Piece::getOrdre).max().orElse(0) + 1;
-        return repository.save(new Piece(affaire, request.nom(), request.surfaceM2(), ordre));
+        Piece piece = new Piece(affaire, request.nom(), request.surfaceM2(), ordre);
+        piece.setPerimetreMl(request.perimetreMl());
+        piece.setHauteurM(request.hauteurM());
+        return repository.save(piece);
     }
 
     public Piece update(Organisation organisation, UUID affaireId, UUID id, PieceRequest request) {
         Piece piece = get(organisation, affaireId, id);
         piece.setNom(request.nom());
         piece.setSurfaceM2(request.surfaceM2());
+        piece.setPerimetreMl(request.perimetreMl());
+        piece.setHauteurM(request.hauteurM());
         if (request.ordre() != null) {
             piece.setOrdre(request.ordre());
         }

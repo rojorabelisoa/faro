@@ -90,6 +90,9 @@ label input, label select { color: var(--texte); }
 .en-ligne { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 label.en-ligne { display: flex; }
 .court { width: 8rem; }
+.tres-court { width: 5.5rem; }
+.metres { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: end; grid-column: span 2; }
+.metres button { font-size: 0.85rem; padding: 0.3rem 0.6rem; background: var(--accent-doux); }
 .actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
 
 .tableau { width: 100%; border-collapse: collapse; background: var(--surface); }

@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { Api, Devis } from '../api'
 import { SessionContext } from '../ApiContext'
-import AffairePage, { deplacer } from './AffairePage'
+import AffairePage, { deplacer, metres } from './AffairePage'
 
 const LOTS = [
   { id: 'l01', code: '01', nom: 'Installation de chantier', ordre: 1 },
@@ -12,8 +12,8 @@ const LOTS = [
   { id: 'l10', code: '10', nom: 'Carrelage', ordre: 10 },
 ]
 const PIECES = [
-  { id: 'cuisine', nom: 'Cuisine', surfaceM2: 12, ordre: 1 },
-  { id: 'sdb', nom: 'Salle de bains', surfaceM2: null, ordre: 2 },
+  { id: 'cuisine', nom: 'Cuisine', surfaceM2: 12, perimetreMl: 14, hauteurM: 2.5, surfaceMursM2: 35, ordre: 1 },
+  { id: 'sdb', nom: 'Salle de bains', surfaceM2: null, perimetreMl: null, hauteurM: null, surfaceMursM2: null, ordre: 2 },
 ]
 const ligne = (id: string, pieceId: string | null, lotId: string, designation: string, montantHt: number) => ({
   id, pieceId, lotId, ouvrageId: null, designation, description: null, unite: 'U', quantite: 1,
@@ -114,5 +114,25 @@ describe('deplacer', () => {
     expect(deplacer(lignes, cuisine, cuisine[1], -1)).toEqual(['1', '3', '2', '4'])
     expect(deplacer(lignes, cuisine, cuisine[0], -1)).toBeNull()
     expect(deplacer(lignes, cuisine, cuisine[1], 1)).toBeNull()
+  })
+})
+
+describe('metres', () => {
+  it('propose sol, murs, plafond et périmètre quand la pièce est mesurée', () => {
+    expect(metres(PIECES[0]).map((m) => `${m.libelle} ${m.quantite} ${m.unite}`))
+      .toEqual(['Sol 12 m²', 'Murs 35 m²', 'Plafond 12 m²', 'Périmètre 14 ml'])
+    expect(metres(PIECES[1])).toEqual([])
+  })
+})
+
+describe('AffairePage – métrés', () => {
+  it('remplit la quantité depuis les murs de la pièce choisie', async () => {
+    renderPage()
+    const form = await screen.findByRole('form', { name: 'Ajouter une ligne' })
+    await userEvent.selectOptions(within(form).getByLabelText('Pièce'), 'cuisine')
+    await userEvent.click(within(form).getByRole('button', { name: /^Murs 35/ }))
+
+    expect(within(form).getByLabelText('Quantité')).toHaveValue('35')
+    expect(within(form).getByLabelText('Unité')).toHaveValue('m²')
   })
 })

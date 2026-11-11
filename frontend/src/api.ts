@@ -46,12 +46,18 @@ export interface Piece {
   id: string
   nom: string
   surfaceM2: number | null
+  perimetreMl: number | null
+  hauteurM: number | null
+  /** Calculée par le serveur : périmètre × hauteur. */
+  surfaceMursM2: number | null
   ordre: number
 }
 
 export interface PieceInput {
   nom: string
   surfaceM2: number | null
+  perimetreMl: number | null
+  hauteurM: number | null
   ordre?: number
 }
 
