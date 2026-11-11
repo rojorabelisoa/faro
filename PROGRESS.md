@@ -54,7 +54,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [ ] 4. Export PDF du devis (par pièce pour le client, par lot pour le conducteur)
   - [ ] 5. Descriptifs détaillés affichés/saisis sur les lignes + réordonner les lignes
   - [ ] 6. Métrés depuis la pièce (sol, murs avec hauteur sous plafond, plafond, périmètre) pour remplir les quantités
-  - [ ] 7. Écrans manquants : modifier/supprimer une affaire, modifier une pièce, gérer les lots, modifier un ouvrage
+  - [x] 7. Écrans manquants : modifier/supprimer une affaire (+ e-mail, téléphone, notes), modifier une pièce (clic sur la pastille), page `/lots`, modifier un ouvrage (+ descriptif)
   - [ ] 8. Import de la bibliothèque de prix (CSV exporté d'Excel ; format ProGBat inconnu)
   - [ ] 9. CR de visite : notes et photos par affaire / pièce, utilisable sur mobile
   - [ ] 10. Estimation rapide en fourchette (ratios €/m² par type de pièce, recalés sur les devis existants)

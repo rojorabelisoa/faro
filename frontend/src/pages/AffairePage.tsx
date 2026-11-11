@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
-import type { Affaire, Devis, Ligne, LigneInput, Lot, Ouvrage, Piece, StatutAffaire } from '../api'
+import { Link, useNavigate, useParams } from 'react-router'
+import type { Affaire, Devis, Ligne, LigneInput, Lot, Ouvrage, Piece, PieceInput, StatutAffaire } from '../api'
 import { useSession } from '../ApiContext'
+import FormulaireAffaire from '../components/FormulaireAffaire'
 import {
   formatEuros, formatNombre, formatTaux, LIBELLES_STATUT, LIBELLES_TYPE_BIEN, parseNombre, TAUX_TVA, UNITES,
 } from '../format'
@@ -17,7 +18,9 @@ export default function AffairePage() {
   const [pieces, setPieces] = useState<Piece[]>([])
   const [lots, setLots] = useState<Lot[]>([])
   const [devis, setDevis] = useState<Devis | null>(null)
+  const navigate = useNavigate()
   const [vue, setVue] = useState<Vue>('piece')
+  const [modification, setModification] = useState(false)
   const [edition, setEdition] = useState<Ligne | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -56,6 +59,11 @@ export default function AffairePage() {
   const changeStatut = (statut: StatutAffaire) =>
     run(async () => setAffaire(await api.updateAffaire(affaire.id, { ...affaire, statut })))
 
+  async function supprimer() {
+    if (!affaire || !window.confirm(`Supprimer définitivement l'affaire « ${affaire.nom} » et tout son devis ?`)) return
+    if (await run(() => api.deleteAffaire(affaire.id))) navigate('/')
+  }
+
   return (
     <>
       <p><Link to="/">← Affaires</Link></p>
@@ -66,6 +74,9 @@ export default function AffairePage() {
             {[affaire.clientNom, affaire.adresse, LIBELLES_TYPE_BIEN[affaire.typeBien]].filter(Boolean).join(' · ')}
           </p>
         </div>
+        <div className="en-ligne">
+        <button onClick={() => setModification(true)}>Modifier</button>
+        <button className="danger" onClick={() => void supprimer()}>Supprimer</button>
         <label className="en-ligne">
           Statut
           <select value={affaire.statut} onChange={(e) => void changeStatut(e.target.value as StatutAffaire)}>
@@ -74,15 +85,33 @@ export default function AffairePage() {
             ))}
           </select>
         </label>
+        </div>
       </div>
+
+      {modification && (
+        <FormulaireAffaire
+          affaire={affaire}
+          libelle="Modifier l'affaire"
+          onCancel={() => setModification(false)}
+          onSubmit={(input) => run(async () => {
+            setAffaire(await api.updateAffaire(affaire.id, input))
+            setModification(false)
+          })}
+        />
+      )}
+      {affaire.notes && !modification && <p className="notes">{affaire.notes}</p>}
 
       {error && <p role="alert" className="erreur">{error}</p>}
       {info && <p role="status" className="info" onClick={() => setInfo(null)}>{info}</p>}
 
       <Pieces
         pieces={pieces}
-        onAdd={(nom, surfaceM2) => run(async () => {
-          await api.createPiece(affaire.id, { nom, surfaceM2 })
+        onAdd={(input) => run(async () => {
+          await api.createPiece(affaire.id, input)
+          await reload()
+        })}
+        onUpdate={(piece, input) => run(async () => {
+          await api.updatePiece(affaire.id, piece.id, { ...input, ordre: piece.ordre })
           await reload()
         })}
         onDelete={(piece) => run(async () => {
@@ -144,44 +173,75 @@ export default function AffairePage() {
   )
 }
 
-function Pieces({ pieces, onAdd, onDelete }: {
+function Pieces({ pieces, onAdd, onUpdate, onDelete }: {
   pieces: Piece[]
-  onAdd: (nom: string, surfaceM2: number | null) => Promise<boolean>
+  onAdd: (input: PieceInput) => Promise<boolean>
+  onUpdate: (piece: Piece, input: PieceInput) => Promise<boolean>
   onDelete: (piece: Piece) => Promise<boolean>
 }) {
-  const [nom, setNom] = useState('')
-  const [surface, setSurface] = useState('')
-
-  async function submit(event: FormEvent) {
-    event.preventDefault()
-    const surfaceM2 = parseNombre(surface)
-    if (await onAdd(nom.trim(), Number.isNaN(surfaceM2) ? null : surfaceM2)) {
-      setNom('')
-      setSurface('')
-    }
-  }
+  const [edition, setEdition] = useState<Piece | null>(null)
 
   return (
     <section className="carte">
       <h2>Pièces</h2>
       <ul className="pastilles">
         {pieces.map((piece) => (
-          <li key={piece.id}>
-            {piece.nom}
-            {piece.surfaceM2 != null && <span className="discret"> · {formatNombre(piece.surfaceM2)} m²</span>}
+          <li key={piece.id} className={edition?.id === piece.id ? 'active' : undefined}>
+            <button className="lien" onClick={() => setEdition(piece)} aria-label={`Modifier ${piece.nom}`}>
+              {piece.nom}
+              {piece.surfaceM2 != null && <span className="discret"> · {formatNombre(piece.surfaceM2)} m²</span>}
+            </button>
             <button className="icone" aria-label={`Supprimer ${piece.nom}`} onClick={() => void onDelete(piece)}>×</button>
           </li>
         ))}
         {pieces.length === 0 && <li className="discret">Ajoutez les pièces relevées pendant la visite.</li>}
       </ul>
-      <form className="en-ligne" onSubmit={submit} aria-label="Ajouter une pièce">
-        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Cuisine, SDB, Chambre 1…" required
-          aria-label="Nom de la pièce" />
-        <input value={surface} onChange={(e) => setSurface(e.target.value)} placeholder="Surface m²"
-          inputMode="decimal" className="court" aria-label="Surface en m²" />
-        <button type="submit">Ajouter la pièce</button>
-      </form>
+      {edition ? (
+        <FormulairePiece
+          key={edition.id}
+          piece={edition}
+          libelle={`Modifier ${edition.nom}`}
+          onCancel={() => setEdition(null)}
+          onSubmit={async (input) => {
+            if (await onUpdate(edition, input)) setEdition(null)
+            return true
+          }}
+        />
+      ) : (
+        <FormulairePiece libelle="Ajouter une pièce" onSubmit={onAdd} />
+      )}
     </section>
+  )
+}
+
+function FormulairePiece({ piece, libelle, onSubmit, onCancel }: {
+  piece?: Piece
+  libelle: string
+  onSubmit: (input: PieceInput) => Promise<boolean>
+  onCancel?: () => void
+}) {
+  const [nom, setNom] = useState(piece?.nom ?? '')
+  const [surface, setSurface] = useState(piece?.surfaceM2 != null ? String(piece.surfaceM2).replace('.', ',') : '')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    const surfaceM2 = parseNombre(surface)
+    const ok = await onSubmit({ nom: nom.trim(), surfaceM2: Number.isNaN(surfaceM2) ? null : surfaceM2 })
+    if (ok && !piece) {
+      setNom('')
+      setSurface('')
+    }
+  }
+
+  return (
+    <form className="en-ligne" onSubmit={submit} aria-label={libelle}>
+      <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Cuisine, SDB, Chambre 1…" required
+        aria-label="Nom de la pièce" />
+      <input value={surface} onChange={(e) => setSurface(e.target.value)} placeholder="Surface m²"
+        inputMode="decimal" className="court" aria-label="Surface en m²" />
+      {onCancel && <button type="button" onClick={onCancel}>Annuler</button>}
+      <button type="submit">{piece ? 'Enregistrer' : 'Ajouter la pièce'}</button>
+    </form>
   )
 }
 

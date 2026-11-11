@@ -8,6 +8,7 @@ export default function BibliothequePage() {
   const [ouvrages, setOuvrages] = useState<Ouvrage[] | null>(null)
   const [lots, setLots] = useState<Lot[]>([])
   const [recherche, setRecherche] = useState('')
+  const [edition, setEdition] = useState<Ouvrage | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(
@@ -24,7 +25,7 @@ export default function BibliothequePage() {
     return () => clearTimeout(timer)
   }, [load, recherche])
 
-  async function create(event: FormEvent<HTMLFormElement>) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formElement = event.currentTarget
     const form = new FormData(formElement)
@@ -33,16 +34,22 @@ export default function BibliothequePage() {
       setError('Le prix unitaire doit être un nombre.')
       return
     }
+    const input = {
+      lotId: String(form.get('lotId')),
+      designation: String(form.get('designation')),
+      description: String(form.get('description') ?? '').trim() || null,
+      unite: String(form.get('unite')),
+      prixUnitaireHt: prix,
+      tauxTva: Number(form.get('tauxTva')),
+    }
     try {
-      await api.createOuvrage({
-        lotId: String(form.get('lotId')),
-        designation: String(form.get('designation')),
-        description: null,
-        unite: String(form.get('unite')),
-        prixUnitaireHt: prix,
-        tauxTva: Number(form.get('tauxTva')),
-      })
-      formElement.reset()
+      if (edition) {
+        await api.updateOuvrage(edition.id, input)
+        setEdition(null)
+      } else {
+        await api.createOuvrage(input)
+        formElement.reset()
+      }
       setError(null)
       await load(recherche.trim())
     } catch (e) {
@@ -72,39 +79,46 @@ export default function BibliothequePage() {
       <p className="sous-titre">Vos prix de référence, réutilisables dans tous les devis.</p>
       {error && <p role="alert" className="erreur">{error}</p>}
 
-      <form className="carte formulaire-ligne" onSubmit={create} aria-label="Nouvel ouvrage">
-        <h3>Nouvel ouvrage</h3>
+      <form key={edition?.id ?? 'nouveau'} className="carte formulaire-ligne" onSubmit={save}
+        aria-label={edition ? "Modifier l'ouvrage" : 'Nouvel ouvrage'}>
+        <h3>{edition ? `Modifier « ${edition.designation} »` : 'Nouvel ouvrage'}</h3>
         <div className="grille">
           <label className="large">
             Désignation
-            <input name="designation" required />
+            <input name="designation" required defaultValue={edition?.designation} />
           </label>
           <label>
             Lot
-            <select name="lotId" required defaultValue="">
+            <select name="lotId" required defaultValue={edition?.lotId ?? ''}>
               <option value="" disabled>Choisir…</option>
               {lots.map((lot) => <option key={lot.id} value={lot.id}>{lot.code} · {lot.nom}</option>)}
             </select>
           </label>
           <label>
             Unité
-            <select name="unite" defaultValue="U">
+            <select name="unite" defaultValue={edition?.unite ?? 'U'}>
               {UNITES.map((u) => <option key={u} value={u}>{u}</option>)}
             </select>
           </label>
           <label>
             PU HT (€)
-            <input name="prix" inputMode="decimal" required />
+            <input name="prix" inputMode="decimal" required
+              defaultValue={edition ? String(edition.prixUnitaireHt).replace('.', ',') : ''} />
           </label>
           <label>
             TVA
-            <select name="tauxTva" defaultValue="10">
+            <select name="tauxTva" defaultValue={String(edition?.tauxTva ?? 10)}>
               {TAUX_TVA.map((t) => <option key={t} value={t}>{formatTaux(t)}</option>)}
             </select>
           </label>
+          <label className="pleine">
+            Descriptif
+            <textarea name="description" rows={2} defaultValue={edition?.description ?? ''} />
+          </label>
         </div>
         <div className="actions">
-          <button type="submit" className="primaire">Ajouter à la bibliothèque</button>
+          {edition && <button type="button" onClick={() => setEdition(null)}>Annuler</button>}
+          <button type="submit" className="primaire">{edition ? 'Enregistrer' : 'Ajouter à la bibliothèque'}</button>
         </div>
       </form>
 
@@ -130,12 +144,16 @@ export default function BibliothequePage() {
           <tbody>
             {ouvrages.map((ouvrage) => (
               <tr key={ouvrage.id}>
-                <td>{ouvrage.designation}</td>
+                <td>
+                  {ouvrage.designation}
+                  {ouvrage.description && <div className="discret">{ouvrage.description}</div>}
+                </td>
                 <td className="discret">{nomLot(ouvrage.lotId)}</td>
                 <td>{ouvrage.unite}</td>
                 <td className="nombre">{formatEuros(ouvrage.prixUnitaireHt)}</td>
                 <td className="nombre">{formatTaux(ouvrage.tauxTva)}</td>
                 <td className="actions-ligne">
+                  <button onClick={() => setEdition(ouvrage)}>Modifier</button>
                   <button className="danger" onClick={() => void remove(ouvrage)}
                     aria-label={`Supprimer ${ouvrage.designation}`}>Supprimer</button>
                 </td>

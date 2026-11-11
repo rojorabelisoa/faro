@@ -49,6 +49,18 @@ export interface Piece {
   ordre: number
 }
 
+export interface PieceInput {
+  nom: string
+  surfaceM2: number | null
+  ordre?: number
+}
+
+export interface LotInput {
+  code: string
+  nom: string
+  ordre?: number
+}
+
 export interface Lot {
   id: string
   code: string
@@ -149,12 +161,17 @@ export function createApi(token: string) {
     deleteAffaire: (id: string) => request<void>(token, `/api/affaires/${id}`, { method: 'DELETE' }),
 
     pieces: (affaireId: string) => request<Piece[]>(token, `/api/affaires/${affaireId}/pieces`),
-    createPiece: (affaireId: string, input: { nom: string; surfaceM2: number | null }) =>
+    createPiece: (affaireId: string, input: PieceInput) =>
       request<Piece>(token, `/api/affaires/${affaireId}/pieces`, json('POST', input)),
+    updatePiece: (affaireId: string, id: string, input: PieceInput) =>
+      request<Piece>(token, `/api/affaires/${affaireId}/pieces/${id}`, json('PUT', input)),
     deletePiece: (affaireId: string, id: string) =>
       request<void>(token, `/api/affaires/${affaireId}/pieces/${id}`, { method: 'DELETE' }),
 
     lots: () => request<Lot[]>(token, '/api/lots'),
+    createLot: (input: LotInput) => request<Lot>(token, '/api/lots', json('POST', input)),
+    updateLot: (id: string, input: LotInput) => request<Lot>(token, `/api/lots/${id}`, json('PUT', input)),
+    deleteLot: (id: string) => request<void>(token, `/api/lots/${id}`, { method: 'DELETE' }),
 
     devis: (affaireId: string) => request<Devis>(token, `/api/affaires/${affaireId}/devis`),
     createLigne: (affaireId: string, input: LigneInput) =>
@@ -169,6 +186,8 @@ export function createApi(token: string) {
     ouvrages: (q?: string) =>
       request<Ouvrage[]>(token, `/api/ouvrages${q ? `?q=${encodeURIComponent(q)}` : ''}`),
     createOuvrage: (input: OuvrageInput) => request<Ouvrage>(token, '/api/ouvrages', json('POST', input)),
+    updateOuvrage: (id: string, input: OuvrageInput) =>
+      request<Ouvrage>(token, `/api/ouvrages/${id}`, json('PUT', input)),
     deleteOuvrage: (id: string) => request<void>(token, `/api/ouvrages/${id}`, { method: 'DELETE' }),
   }
 }

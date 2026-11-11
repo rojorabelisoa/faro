@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import type { Affaire, TypeBien } from '../api'
+import type { Affaire, AffaireInput } from '../api'
+import FormulaireAffaire from '../components/FormulaireAffaire'
 import { useSession } from '../ApiContext'
 import { LIBELLES_STATUT, LIBELLES_TYPE_BIEN } from '../format'
 
@@ -15,16 +16,9 @@ export default function AffairesPage() {
     api.affaires().then(setAffaires).catch((e: Error) => setError(e.message))
   }, [api])
 
-  async function create(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
+  async function create(input: AffaireInput) {
     try {
-      const affaire = await api.createAffaire({
-        nom: String(form.get('nom')),
-        clientNom: String(form.get('clientNom')) || null,
-        adresse: String(form.get('adresse')) || null,
-        typeBien: form.get('typeBien') as TypeBien,
-      })
+      const affaire = await api.createAffaire(input)
       navigate(`/affaires/${affaire.id}`)
     } catch (e) {
       setError((e as Error).message)
@@ -41,32 +35,7 @@ export default function AffairesPage() {
       {error && <p role="alert" className="erreur">{error}</p>}
 
       {creation && (
-        <form className="carte formulaire" onSubmit={create} aria-label="Nouvelle affaire">
-          <label>
-            Nom de l'affaire
-            <input name="nom" required placeholder="Rénovation T3 rue Victor Hugo" />
-          </label>
-          <label>
-            Client
-            <input name="clientNom" placeholder="M. et Mme Martin" />
-          </label>
-          <label>
-            Adresse
-            <input name="adresse" />
-          </label>
-          <label>
-            Type de bien
-            <select name="typeBien" defaultValue="APPARTEMENT">
-              {Object.entries(LIBELLES_TYPE_BIEN).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </label>
-          <div className="actions">
-            <button type="button" onClick={() => setCreation(false)}>Annuler</button>
-            <button type="submit" className="primaire">Créer</button>
-          </div>
-        </form>
+        <FormulaireAffaire libelle="Nouvelle affaire" onSubmit={create} onCancel={() => setCreation(false)} />
       )}
 
       {affaires === null ? (

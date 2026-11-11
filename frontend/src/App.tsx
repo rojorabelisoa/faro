@@ -6,6 +6,7 @@ import { SessionContext, useSession } from './ApiContext'
 import AffairesPage from './pages/AffairesPage'
 import AffairePage from './pages/AffairePage'
 import BibliothequePage from './pages/BibliothequePage'
+import LotsPage from './pages/LotsPage'
 
 export default function App() {
   const auth = useAuth()
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="/" element={<AffairesPage />} />
             <Route path="/affaires/:id" element={<AffairePage />} />
             <Route path="/bibliotheque" element={<BibliothequePage />} />
+            <Route path="/lots" element={<LotsPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>
@@ -78,6 +80,7 @@ function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: (
         <nav>
           <NavLink to="/" end>Affaires</NavLink>
           <NavLink to="/bibliotheque">Bibliothèque</NavLink>
+          <NavLink to="/lots">Lots</NavLink>
         </nav>
         <span className="utilisateur">
           {me.displayName ?? me.email ?? me.subject} · {me.organisation.nom}
