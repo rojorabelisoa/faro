@@ -21,7 +21,8 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 ## En cours
 
-- MVP devis pièces × lots utilisable. Prochaine étape : démo à la chargée d'études (2.8) et réponses aux questions de suivi de `docs/brainstorm.md`, avant de choisir la suite (CR de visite, estimation, export PDF, ProGBat…).
+- Phase 3, backlog : en cours de réalisation dans l'ordre 20, 22, 21, 7, 5, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 23.
+- Reprise automatique : tâche planifiée « Reprise backlog faro » (`trig_01Dtkand7AoEABUZATjsPNrw`, à la 16e minute de chaque heure) qui relance cette session si elle est interrompue (limite d'usage). La désactiver (update_trigger enabled=false) quand le backlog est terminé.
 - En parallèle : entretien métier non terminé (questions de suivi dans `docs/brainstorm.md`). L'utilisateur a demandé de commencer sans attendre.
 
 ## À faire
@@ -45,7 +46,31 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 2.6 Frontend : écran affaire avec pièces, lignes de devis, bascule vue par pièce / vue par lot, totaux
   - [x] 2.7 Test de bout en bout (Playwright : affaire, 3 pièces, 12 lignes, bibliothèque, bascule pièce/lot, totaux vérifiés à la main)
   - [ ] 2.8 Démo à la chargée d'études et recueil de ses retours (dans `docs/brainstorm.md`)
-- [ ] Plus tard (dépend de l'entretien métier) : CR de visite avec photos, estimation en fourchette, export / coexistence ProGBat, passage au chantier, travaux supplémentaires, marge réelle
+- [ ] Phase 3 : backlog (validé par l'utilisateur le 2026-11-11, « fais jusqu'au 23 »). Une étape = un commit.
+  Les points 1 à 3 sont pour l'utilisateur (Claude ne peut pas les faire) ; les points marqués « bloqué » sont faits partiellement, le reste est noté.
+  - [ ] 1. Installer faro sur le PC de l'utilisateur (Windows + Docker sous WSL) — utilisateur, via sa session Remote Control
+  - [ ] 2. Démo à la chargée d'études, retours dans `docs/brainstorm.md` — utilisateur
+  - [ ] 3. Finir l'entretien métier (questions ouvertes de `docs/brainstorm.md`) — utilisateur
+  - [ ] 4. Export PDF du devis (par pièce pour le client, par lot pour le conducteur)
+  - [ ] 5. Descriptifs détaillés affichés/saisis sur les lignes + réordonner les lignes
+  - [ ] 6. Métrés depuis la pièce (sol, murs avec hauteur sous plafond, plafond, périmètre) pour remplir les quantités
+  - [ ] 7. Écrans manquants : modifier/supprimer une affaire, modifier une pièce, gérer les lots, modifier un ouvrage
+  - [ ] 8. Import de la bibliothèque de prix (CSV exporté d'Excel ; format ProGBat inconnu)
+  - [ ] 9. CR de visite : notes et photos par affaire / pièce, utilisable sur mobile
+  - [ ] 10. Estimation rapide en fourchette (ratios €/m² par type de pièce, recalés sur les devis existants)
+  - [ ] 11. Options Eco / Standard / Premium (gamme par ligne, choix par pièce, comparaison des totaux)
+  - [ ] 12. Versions figées du devis et passage au chantier (dossier travaux transmis au conducteur)
+  - [ ] 13. Travaux supplémentaires / avenants : chiffrage, validation client, historique opposable
+  - [ ] 14. Marge prévue (déboursé sec) vs réelle (dépenses saisies), par lot
+  - [ ] 15. Coexistence ProGBat : export CSV du devis (format ProGBat à confirmer : bloqué sans exemple de fichier)
+  - [ ] 16. Plusieurs utilisateurs par entreprise : invitations, rôles (gérant, chargé d'études, conducteur), nom de l'entreprise
+  - [ ] 17. Espace client : lien sécurisé pour consulter le devis, choisir les options, valider les avenants
+  - [ ] 18. Déploiement : Dockerfiles + compose de production + doc (mise en ligne réelle bloquée : hébergeur et comptes à choisir)
+  - [ ] 19. Abonnements / facturation (bloqué : compte Stripe ou autre à créer ; au plus, modèle de plans)
+  - [x] 20. CI sur toutes les branches (push sur toute branche + PR ; backend via `./mvnw`)
+  - [ ] 21. Tester `docker-compose.yml` de bout en bout (Docker disponible dans la session cloud depuis le 2026-11-11 : `dockerd &`)
+  - [ ] 22. Protection serveur contre la double création d'utilisateur à la première connexion
+  - [ ] 23. Plus tard (business plan) : module investisseur (rentabilité, TRI), achats / bons de commande, IA (bloquée : clé API)
 
 ## Fait
 
