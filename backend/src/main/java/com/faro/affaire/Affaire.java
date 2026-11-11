@@ -60,6 +60,10 @@ public class Affaire {
     @Column(name = "gamme_choisie", nullable = false)
     private Gamme gammeChoisie = Gamme.STANDARD;
 
+    /** Version figée du devis transmise au chantier (null tant que l'affaire n'est pas en chantier). */
+    @Column(name = "version_chantier_id")
+    private UUID versionChantierId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -161,6 +165,14 @@ public class Affaire {
 
     public void setGammeChoisie(Gamme gammeChoisie) {
         this.gammeChoisie = gammeChoisie;
+    }
+
+    public UUID getVersionChantierId() {
+        return versionChantierId;
+    }
+
+    public void setVersionChantierId(UUID versionChantierId) {
+        this.versionChantierId = versionChantierId;
     }
 
     public Instant getCreatedAt() {

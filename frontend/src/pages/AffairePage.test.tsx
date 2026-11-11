@@ -52,6 +52,7 @@ function renderPage(devis: Devis = DEVIS) {
     lots: vi.fn().mockResolvedValue(LOTS),
     devis: vi.fn().mockResolvedValue(devis),
     choisirGamme: vi.fn().mockResolvedValue(undefined),
+    versions: vi.fn().mockResolvedValue([]),
     ouvrages: vi.fn().mockResolvedValue([]),
     createLigne: vi.fn().mockResolvedValue({}),
     visite: vi.fn().mockResolvedValue({ observations: [], photos: [] }),

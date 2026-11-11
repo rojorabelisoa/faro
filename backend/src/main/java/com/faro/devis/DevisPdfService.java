@@ -56,18 +56,26 @@ public class DevisPdfService {
     public byte[] pdf(Organisation organisation, UUID affaireId, Vue vue) {
         Affaire affaire = affaireService.get(organisation, affaireId);
         DevisResponse devis = devisService.devis(organisation, affaireId);
+        return rendre(new EnTete(organisation.getNom(), affaire.getNom(), affaire.getClientNom(), affaire.getAdresse(),
+            "Établi le " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))), devis, vue);
+    }
 
+    /** Informations de l'en-tête ; mention : date ou numéro de version. */
+    public record EnTete(String entreprise, String affaire, String client, String adresse, String mention) {
+    }
+
+    public byte[] rendre(EnTete enTete, DevisResponse devis, Vue vue) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
         PdfWriter.getInstance(document, out);
         document.open();
 
-        document.add(new Paragraph(organisation.getNom(), GRAS));
-        Paragraph titre = new Paragraph("Devis — " + affaire.getNom(), TITRE);
+        document.add(new Paragraph(enTete.entreprise(), GRAS));
+        Paragraph titre = new Paragraph("Devis — " + enTete.affaire(), TITRE);
         titre.setSpacingBefore(8);
         document.add(titre);
-        document.add(new Paragraph(String.join(" · ", nonVides(affaire.getClientNom(), affaire.getAdresse())), NORMAL));
-        document.add(new Paragraph("Établi le " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        document.add(new Paragraph(String.join(" · ", nonVides(enTete.client(), enTete.adresse())), NORMAL));
+        document.add(new Paragraph(enTete.mention()
             + (vue == Vue.PIECE ? " — présentation par pièce" : " — présentation par lot"), DISCRET));
 
         PdfPTable table = new PdfPTable(LARGEURS.length);

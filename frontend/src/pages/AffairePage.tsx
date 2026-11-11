@@ -6,6 +6,7 @@ import type {
 import { useSession } from '../ApiContext'
 import FormulaireAffaire from '../components/FormulaireAffaire'
 import { nomFichier, telecharger } from '../components/telecharger'
+import Versions from '../components/Versions'
 import Visite from '../components/Visite'
 import {
   devinerTypePiece, formatEuros, formatNombre, formatTaux, LIBELLES_GAMME, LIBELLES_NIVEAU, LIBELLES_STATUT, LIBELLES_TYPE_BIEN,
@@ -200,6 +201,8 @@ export default function AffairePage() {
           })}
         />
       </section>
+
+      <Versions affaire={affaire} onChantier={reload} />
     </>
   )
 }

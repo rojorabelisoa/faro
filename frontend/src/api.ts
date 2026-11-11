@@ -27,8 +27,21 @@ export interface Affaire {
   typeBien: TypeBien
   statut: StatutAffaire
   notes: string | null
+  /** Version figée transmise au chantier (null avant le passage en chantier). */
+  versionChantierId: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface Version {
+  id: string
+  numero: number
+  libelle: string
+  totalHt: number
+  totalTtc: number
+  auteur: string | null
+  createdAt: string
+  chantier: boolean
 }
 
 export interface AffaireInput {
@@ -332,6 +345,14 @@ export function createApi(token: string) {
     ratios: () => request<Ratio[]>(token, '/api/ratios'),
     updateRatio: (id: string, input: { prixMinM2: number; prixMaxM2: number }) =>
       request<void>(token, `/api/ratios/${id}`, json('PUT', input)),
+
+    versions: (affaireId: string) => request<Version[]>(token, `/api/affaires/${affaireId}/versions`),
+    figerVersion: (affaireId: string, libelle: string) =>
+      request<Version>(token, `/api/affaires/${affaireId}/versions`, json('POST', { libelle })),
+    passerEnChantier: (affaireId: string) =>
+      request<Version>(token, `/api/affaires/${affaireId}/chantier`, json('POST', {})),
+    versionPdf: (affaireId: string, id: string, vue: 'PIECE' | 'LOT') =>
+      download(token, `/api/affaires/${affaireId}/versions/${id}/devis.pdf?vue=${vue}`),
 
     exportOuvrages: () => download(token, '/api/ouvrages/export.csv'),
     importOuvrages: (fichier: File) => importCsv(token, fichier),

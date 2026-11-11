@@ -13,13 +13,14 @@ public record AffaireResponse(
         TypeBien typeBien,
         StatutAffaire statut,
         String notes,
+        UUID versionChantierId,
         Instant createdAt,
         Instant updatedAt) {
 
     static AffaireResponse from(Affaire affaire) {
         return new AffaireResponse(affaire.getId(), affaire.getNom(), affaire.getClientNom(),
             affaire.getClientEmail(), affaire.getClientTelephone(), affaire.getAdresse(),
-            affaire.getTypeBien(), affaire.getStatut(), affaire.getNotes(),
+            affaire.getTypeBien(), affaire.getStatut(), affaire.getNotes(), affaire.getVersionChantierId(),
             affaire.getCreatedAt(), affaire.getUpdatedAt());
     }
 }
