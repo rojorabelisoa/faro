@@ -49,6 +49,10 @@ public class Ouvrage {
     @Column(name = "taux_tva", nullable = false)
     private BigDecimal tauxTva;
 
+    /** Déboursé sec : coût de revient unitaire HT (matériaux + main-d'œuvre), facultatif. */
+    @Column(name = "debourse_unitaire_ht")
+    private BigDecimal debourseUnitaireHt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -115,6 +119,14 @@ public class Ouvrage {
 
     public void setPrixUnitaireHt(BigDecimal prixUnitaireHt) {
         this.prixUnitaireHt = prixUnitaireHt;
+    }
+
+    public BigDecimal getDebourseUnitaireHt() {
+        return debourseUnitaireHt;
+    }
+
+    public void setDebourseUnitaireHt(BigDecimal debourseUnitaireHt) {
+        this.debourseUnitaireHt = debourseUnitaireHt;
     }
 
     public BigDecimal getTauxTva() {

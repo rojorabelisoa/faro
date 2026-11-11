@@ -7,6 +7,7 @@ import { useSession } from '../ApiContext'
 import FormulaireAffaire from '../components/FormulaireAffaire'
 import { nomFichier, telecharger } from '../components/telecharger'
 import Avenants from '../components/Avenants'
+import MargeChantier from '../components/MargeChantier'
 import Versions from '../components/Versions'
 import Visite from '../components/Visite'
 import {
@@ -180,6 +181,7 @@ export default function AffairePage() {
             const ouvrage = await api.createOuvrage({
               lotId: ligne.lotId, designation: ligne.designation, description: ligne.description,
               unite: ligne.unite, prixUnitaireHt: ligne.prixUnitaireHt, tauxTva: ligne.tauxTva,
+              debourseUnitaireHt: ligne.debourseUnitaireHt,
             })
             setInfo(`« ${ouvrage.designation} » ajouté à la bibliothèque.`)
           })}
@@ -210,6 +212,8 @@ export default function AffairePage() {
       <Versions affaire={affaire} onChantier={reload} />
 
       {affaire.versionChantierId && <Avenants affaire={affaire} pieces={pieces} lots={lots} />}
+
+      <MargeChantier affaireId={affaire.id} lots={lots} version={devis} />
     </>
   )
 }
@@ -538,6 +542,8 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
   const [prix, setPrix] = useState(ligne ? String(ligne.prixUnitaireHt).replace('.', ',') : '')
   const [tauxTva, setTauxTva] = useState(ligne?.tauxTva ?? 10)
   const [gamme, setGamme] = useState<string>(ligne?.gamme ?? '')
+  const [debourse, setDebourse] = useState(ligne?.debourseUnitaireHt != null
+    ? String(ligne.debourseUnitaireHt).replace('.', ',') : '')
   const [recherche, setRecherche] = useState('')
   const [suggestions, setSuggestions] = useState<Ouvrage[]>([])
   const [invalide, setInvalide] = useState<string | null>(null)
@@ -559,12 +565,14 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
     event.preventDefault()
     const q = parseNombre(quantite)
     const pu = parseNombre(prix)
-    if (Number.isNaN(q) || q < 0 || Number.isNaN(pu)) {
-      setInvalide('Quantité et prix unitaire doivent être des nombres (quantité positive).')
+    const ds = debourse.trim() === '' ? null : parseNombre(debourse)
+    if (Number.isNaN(q) || q < 0 || Number.isNaN(pu) || (ds != null && (Number.isNaN(ds) || ds < 0))) {
+      setInvalide('Quantité, prix et déboursé doivent être des nombres (quantité et déboursé positifs).')
       return
     }
     setInvalide(null)
     const ok = await onSubmit({
+      debourseUnitaireHt: ds,
       pieceId: piece, lotId, designation: designation.trim(), description: description.trim() || null,
       unite, quantite: q, prixUnitaireHt: pu, tauxTva, gamme: (gamme || null) as Gamme | null,
     })
@@ -574,6 +582,7 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
       setDescription('')
       setQuantite('')
       setPrix('')
+      setDebourse('')
     }
   }
 
@@ -667,6 +676,11 @@ function FormulaireLigne({ ligne, pieces, lots, onSubmit, onCancel, onAddFromLib
           <select value={tauxTva} onChange={(e) => setTauxTva(Number(e.target.value))}>
             {TAUX_TVA.map((t) => <option key={t} value={t}>{formatTaux(t)}</option>)}
           </select>
+        </label>
+        <label>
+          Déboursé sec unitaire HT (€)
+          <input value={debourse} onChange={(e) => setDebourse(e.target.value)} inputMode="decimal"
+            placeholder="facultatif" title="Coût de revient : matériaux + main-d'œuvre" />
         </label>
         <label>
           Option

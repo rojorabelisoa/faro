@@ -16,5 +16,8 @@ public interface LigneDevisRepository extends JpaRepository<LigneDevis, UUID> {
     @EntityGraph(attributePaths = {"piece", "lot"})
     List<LigneDevis> findByAvenantIdOrderByOrdreAsc(UUID avenantId);
 
+    @EntityGraph(attributePaths = {"lot", "avenant"})
+    List<LigneDevis> findByAffaireIdAndAvenantIsNotNull(UUID affaireId);
+
     Optional<LigneDevis> findByIdAndAffaireId(UUID id, UUID affaireId);
 }

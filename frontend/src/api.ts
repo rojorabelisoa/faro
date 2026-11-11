@@ -136,6 +136,8 @@ export interface Ligne {
   montantHt: number
   /** null : ligne commune à toutes les gammes. */
   gamme: Gamme | null
+  /** Coût de revient unitaire HT prévu (facultatif). */
+  debourseUnitaireHt: number | null
   /** false : option d'une gamme non retenue, hors totaux. */
   incluse: boolean
   ordre: number
@@ -151,6 +153,7 @@ export interface LigneInput {
   prixUnitaireHt: number
   tauxTva: number
   gamme?: Gamme | null
+  debourseUnitaireHt?: number | null
 }
 
 export interface Devis {
@@ -179,6 +182,7 @@ export interface Ouvrage {
   unite: string
   prixUnitaireHt: number
   tauxTva: number
+  debourseUnitaireHt: number | null
 }
 
 export type OuvrageInput = Omit<Ouvrage, 'id'>
@@ -238,6 +242,45 @@ export interface Marche {
   actuelHt: number
   actuelTtc: number
   avenantsEnAttenteHt: number
+}
+
+export type NatureDepense = 'MATERIAUX' | 'MAIN_OEUVRE' | 'SOUS_TRAITANCE' | 'LOCATION' | 'AUTRE'
+
+export interface Depense {
+  id: string
+  lotId: string
+  nature: NatureDepense
+  libelle: string
+  fournisseur: string | null
+  montantHt: number
+  dateDepense: string
+}
+
+export type DepenseInput = Omit<Depense, 'id'>
+
+export interface Marge {
+  lots: {
+    lotId: string
+    code: string
+    nom: string
+    venduHt: number
+    coutPrevuHt: number
+    coutReelHt: number
+    margePrevueHt: number
+    margeReelleHt: number
+    lignesSansDebourse: number
+  }[]
+  total: {
+    venduHt: number
+    coutPrevuHt: number
+    coutReelHt: number
+    margePrevueHt: number
+    margeReelleHt: number
+    tauxMargePrevue: number | null
+    tauxMargeReelle: number | null
+    lignesSansDebourse: number
+  }
+  depenses: Depense[]
 }
 
 export interface ImportResultat {
@@ -403,6 +446,12 @@ export function createApi(token: string) {
       request<Avenant>(token, `/api/affaires/${affaireId}/avenants/${id}/decision`, json('POST', input)),
     avenantPdf: (affaireId: string, id: string) =>
       download(token, `/api/affaires/${affaireId}/avenants/${id}/document.pdf`),
+
+    marge: (affaireId: string) => request<Marge>(token, `/api/affaires/${affaireId}/marge`),
+    addDepense: (affaireId: string, input: DepenseInput) =>
+      request<Depense>(token, `/api/affaires/${affaireId}/depenses`, json('POST', input)),
+    deleteDepense: (affaireId: string, id: string) =>
+      request<void>(token, `/api/affaires/${affaireId}/depenses/${id}`, { method: 'DELETE' }),
 
     exportOuvrages: () => download(token, '/api/ouvrages/export.csv'),
     importOuvrages: (fichier: File) => importCsv(token, fichier),

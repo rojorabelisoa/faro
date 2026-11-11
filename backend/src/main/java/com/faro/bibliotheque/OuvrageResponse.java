@@ -10,10 +10,12 @@ public record OuvrageResponse(
         String description,
         String unite,
         BigDecimal prixUnitaireHt,
-        BigDecimal tauxTva) {
+        BigDecimal tauxTva,
+        BigDecimal debourseUnitaireHt) {
 
     public static OuvrageResponse from(Ouvrage ouvrage) {
         return new OuvrageResponse(ouvrage.getId(), ouvrage.getLot().getId(), ouvrage.getDesignation(),
-            ouvrage.getDescription(), ouvrage.getUnite(), ouvrage.getPrixUnitaireHt(), ouvrage.getTauxTva());
+            ouvrage.getDescription(), ouvrage.getUnite(), ouvrage.getPrixUnitaireHt(), ouvrage.getTauxTva(),
+            ouvrage.getDebourseUnitaireHt());
     }
 }

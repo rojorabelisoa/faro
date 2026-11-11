@@ -42,6 +42,12 @@ export default function BibliothequePage() {
       unite: String(form.get('unite')),
       prixUnitaireHt: prix,
       tauxTva: Number(form.get('tauxTva')),
+      debourseUnitaireHt: String(form.get('debourse') ?? '').trim() === '' ? null
+        : parseNombre(String(form.get('debourse'))),
+    }
+    if (input.debourseUnitaireHt != null && Number.isNaN(input.debourseUnitaireHt)) {
+      setError('Le déboursé sec doit être un nombre.')
+      return
     }
     try {
       if (edition) {
@@ -109,7 +115,7 @@ export default function BibliothequePage() {
         <h3>Importer depuis Excel</h3>
         <p className="discret">
           Enregistrez votre tableau au format « CSV (séparateur : point-virgule) » avec les colonnes
-          <code> lot ; designation ; unite ; prix_unitaire_ht ; tva ; description</code>.
+          <code> lot ; designation ; unite ; prix_unitaire_ht ; tva ; description ; debourse_unitaire_ht</code>.
           Le lot est son code (07, 10…). Un ouvrage déjà présent (même lot, même désignation) est mis à jour :
           réimporter le fichier suffit pour actualiser les prix. L'export ci-dessous sert de modèle.
         </p>
@@ -168,6 +174,11 @@ export default function BibliothequePage() {
             <select name="tauxTva" defaultValue={String(edition?.tauxTva ?? 10)}>
               {TAUX_TVA.map((t) => <option key={t} value={t}>{formatTaux(t)}</option>)}
             </select>
+          </label>
+          <label>
+            Déboursé sec HT (€)
+            <input name="debourse" inputMode="decimal" placeholder="facultatif"
+              defaultValue={edition?.debourseUnitaireHt != null ? String(edition.debourseUnitaireHt).replace('.', ',') : ''} />
           </label>
           <label className="pleine">
             Descriptif

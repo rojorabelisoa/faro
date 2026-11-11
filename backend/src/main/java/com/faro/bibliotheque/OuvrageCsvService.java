@@ -28,7 +28,8 @@ import com.faro.organisation.Organisation;
 @Transactional
 public class OuvrageCsvService {
 
-    static final List<String> COLONNES = List.of("lot", "designation", "unite", "prix_unitaire_ht", "tva", "description");
+    static final List<String> COLONNES = List.of("lot", "designation", "unite", "prix_unitaire_ht", "tva", "description",
+        "debourse_unitaire_ht");
     private static final List<String> OBLIGATOIRES = List.of("lot", "designation", "unite", "prix_unitaire_ht");
     private static final int MAX_LIGNES = 5000;
 
@@ -48,7 +49,8 @@ public class OuvrageCsvService {
         for (Ouvrage ouvrage : repository.search(organisation.getId(), null, null)) {
             csv.append(Csv.ligne(List.of(codes.get(ouvrage.getLot().getId()), ouvrage.getDesignation(),
                 ouvrage.getUnite(), decimal(ouvrage.getPrixUnitaireHt()), decimal(ouvrage.getTauxTva()),
-                ouvrage.getDescription() == null ? "" : ouvrage.getDescription())));
+                ouvrage.getDescription() == null ? "" : ouvrage.getDescription(),
+                ouvrage.getDebourseUnitaireHt() == null ? "" : decimal(ouvrage.getDebourseUnitaireHt()))));
         }
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
@@ -117,6 +119,8 @@ public class OuvrageCsvService {
                 ouvrage.setUnite(unite);
                 ouvrage.setPrixUnitaireHt(prix);
                 ouvrage.setTauxTva(taux);
+                String debourse = champ.apply("debourse_unitaire_ht");
+                ouvrage.setDebourseUnitaireHt(debourse.isEmpty() ? null : nombre(debourse, "déboursé sec"));
                 String description = champ.apply("description");
                 ouvrage.setDescription(description.isEmpty() ? null : description);
                 ouvrages.add(ouvrage);
@@ -147,6 +151,7 @@ public class OuvrageCsvService {
             case "pu_ht", "prix_ht", "prix", "pu" -> "prix_unitaire_ht";
             case "taux_tva", "tva_percent" -> "tva";
             case "descriptif" -> "description";
+            case "debourse", "debourse_sec", "cout_unitaire_ht", "cout_ht" -> "debourse_unitaire_ht";
             default -> cle;
         };
     }

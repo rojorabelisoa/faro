@@ -3,6 +3,7 @@ package com.faro.bibliotheque;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,5 +16,6 @@ public record OuvrageRequest(
         String description,
         @NotBlank @Size(max = 20) String unite,
         @NotNull @Digits(integer = 10, fraction = 2) BigDecimal prixUnitaireHt,
-        BigDecimal tauxTva) {
+        BigDecimal tauxTva,
+        @DecimalMin("0") @Digits(integer = 10, fraction = 2) BigDecimal debourseUnitaireHt) {
 }

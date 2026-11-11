@@ -144,6 +144,7 @@ public class DevisService {
         ligne.setQuantite(request.quantite());
         ligne.setPrixUnitaireHt(ouvrage.getPrixUnitaireHt());
         ligne.setTauxTva(ouvrage.getTauxTva());
+        ligne.setDebourseUnitaireHt(ouvrage.getDebourseUnitaireHt());
         return repository.save(ligne);
     }
 
@@ -227,6 +228,7 @@ public class DevisService {
     private void apply(Organisation organisation, UUID affaireId, LigneDevis ligne, LigneDevisRequest request) {
         ligne.setTauxTva(Montants.tauxTva(request.tauxTva()));
         ligne.setGamme(request.gamme());
+        ligne.setDebourseUnitaireHt(request.debourseUnitaireHt());
         ligne.setPiece(piece(organisation, affaireId, request.pieceId()));
         ligne.setLot(lotService.get(organisation, request.lotId()));
         ligne.setDesignation(request.designation());

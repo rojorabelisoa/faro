@@ -58,5 +58,6 @@ public class OuvrageService {
         ouvrage.setUnite(request.unite());
         ouvrage.setPrixUnitaireHt(request.prixUnitaireHt());
         ouvrage.setTauxTva(Montants.tauxTva(request.tauxTva()));
+        ouvrage.setDebourseUnitaireHt(request.debourseUnitaireHt());
     }
 }

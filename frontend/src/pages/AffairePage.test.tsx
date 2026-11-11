@@ -18,7 +18,7 @@ const PIECES: Piece[] = [
 const ligne = (id: string, pieceId: string | null, lotId: string, designation: string, montantHt: number,
   gamme: Gamme | null = null, incluse = true) => ({
   id, pieceId, lotId, ouvrageId: null, designation, description: null, unite: 'U', quantite: 1,
-  prixUnitaireHt: montantHt, tauxTva: 10, montantHt, gamme, incluse, ordre: 1,
+  prixUnitaireHt: montantHt, tauxTva: 10, montantHt, gamme, debourseUnitaireHt: null, incluse, ordre: 1,
 })
 const DEVIS: Devis = {
   lignes: [
@@ -53,6 +53,7 @@ function renderPage(devis: Devis = DEVIS) {
     devis: vi.fn().mockResolvedValue(devis),
     choisirGamme: vi.fn().mockResolvedValue(undefined),
     versions: vi.fn().mockResolvedValue([]),
+    marge: vi.fn().mockResolvedValue({ lots: [], total: { venduHt: 0, coutPrevuHt: 0, coutReelHt: 0, margePrevueHt: 0, margeReelleHt: 0, tauxMargePrevue: null, tauxMargeReelle: null, lignesSansDebourse: 0 }, depenses: [] }),
     ouvrages: vi.fn().mockResolvedValue([]),
     createLigne: vi.fn().mockResolvedValue({}),
     visite: vi.fn().mockResolvedValue({ observations: [], photos: [] }),
@@ -115,7 +116,7 @@ describe('AffairePage', () => {
 
     expect(api.createLigne).toHaveBeenCalledWith('a1', {
       pieceId: 'sdb', lotId: 'l10', designation: 'Carrelage mural', description: null, unite: 'm²', quantite: 4.25,
-      prixUnitaireHt: 72.4, tauxTva: 10, gamme: null,
+      prixUnitaireHt: 72.4, tauxTva: 10, gamme: null, debourseUnitaireHt: null,
     })
   })
 })

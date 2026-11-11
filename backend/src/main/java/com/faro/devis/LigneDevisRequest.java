@@ -24,5 +24,6 @@ public record LigneDevisRequest(
         @NotNull @Digits(integer = 10, fraction = 2) BigDecimal prixUnitaireHt,
         BigDecimal tauxTva,
         Gamme gamme,
+        @DecimalMin("0") @Digits(integer = 10, fraction = 2) BigDecimal debourseUnitaireHt,
         Integer ordre) {
 }

@@ -30,6 +30,7 @@ public record DevisResponse(
             BigDecimal tauxTva,
             BigDecimal montantHt,
             Gamme gamme,
+            BigDecimal debourseUnitaireHt,
             /** false : ligne d'une gamme non retenue, hors totaux. */
             boolean incluse,
             int ordre) {
@@ -40,7 +41,7 @@ public record DevisResponse(
                 ligne.getLot().getId(), ligne.getOuvrage() != null ? ligne.getOuvrage().getId() : null,
                 ligne.getDesignation(), ligne.getDescription(), ligne.getUnite(),
                 ligne.getQuantite(), ligne.getPrixUnitaireHt(), ligne.getTauxTva(), ligne.getMontantHt(),
-                ligne.getGamme(), ligne.isIncluse(), ligne.getOrdre());
+                ligne.getGamme(), ligne.getDebourseUnitaireHt(), ligne.isIncluse(), ligne.getOrdre());
         }
     }
 
