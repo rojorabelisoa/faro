@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.faro.organisation.OrganisationService;
+import com.faro.organisation.RoleEntreprise;
 
 @Service
 public class AppUserService {
@@ -53,6 +54,7 @@ public class AppUserService {
         // En attendant les invitations, chaque nouvel utilisateur a sa propre organisation.
         if (user.getOrganisation() == null) {
             user.setOrganisation(organisationService.create(NOM_ORGANISATION_PAR_DEFAUT));
+            user.setRoleEntreprise(RoleEntreprise.GERANT);
         }
         return repository.save(user);
     }

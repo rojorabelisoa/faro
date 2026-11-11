@@ -179,3 +179,6 @@ label.en-ligne { display: flex; }
 
 .marge td.negatif, .marge .negatif { color: var(--danger); font-weight: 600; }
 .marge tfoot th, .marge tfoot td { font-weight: 700; }
+
+.lien-invitation { word-break: break-all; background: var(--surface); padding: 0.1rem 0.3rem; border-radius: 4px; }
+.centre-carte { max-width: 32rem; margin: 2rem auto; text-align: center; }

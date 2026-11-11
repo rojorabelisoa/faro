@@ -63,7 +63,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
   - [x] 13. Avenants (migration V11) : lignes de devis rattachées à un avenant (`ligne_devis.avenant_id`), cycle BROUILLON → ENVOYE (contenu figé en JSON) → VALIDE / REFUSE (qui, quand, commentaire), PDF, montant du marché (`GET /api/affaires/{id}/marche` = dossier travaux + avenants validés) ; devis de base verrouillé (409) une fois en chantier
   - [x] 14. Marge (migration V12) : déboursé sec unitaire facultatif sur lignes et ouvrages (copié depuis la bibliothèque, colonne CSV `debourse_unitaire_ht`), dépenses réelles par lot (`/api/affaires/{id}/depenses`), `GET /api/affaires/{id}/marge` : vendu (lignes retenues + avenants validés), coût prévu / réel, marges et taux par lot et au total, lignes sans déboursé signalées
   - [x] 15. Export CSV « Excel » du devis (`GET /api/affaires/{id}/devis.csv`, lignes retenues, lot / pièce / désignation / quantité / PU / TVA / montant / gamme). Format d'import ProGBat : BLOQUÉ, à adapter dès qu'on a un fichier exemple
-  - [ ] 16. Plusieurs utilisateurs par entreprise : invitations, rôles (gérant, chargé d'études, conducteur), nom de l'entreprise
+  - [x] 16. Équipe (migration V13) : rôle d'entreprise (GERANT, CHARGE_ETUDES, CONDUCTEUR_TRAVAUX) sur l'utilisateur, invitations par lien à usage unique valable 7 jours (`/api/entreprise/invitations`, `/api/invitations/{code}/accepter`), renommage de l'entreprise, changement de rôle / retrait d'un membre (gérant seulement, au moins un gérant), page `/entreprise` et `/rejoindre/{code}` ; inscription activée dans le realm Keycloak
   - [ ] 17. Espace client : lien sécurisé pour consulter le devis, choisir les options, valider les avenants
   - [ ] 18. Déploiement : Dockerfiles + compose de production + doc (mise en ligne réelle bloquée : hébergeur et comptes à choisir)
   - [ ] 19. Abonnements / facturation (bloqué : compte Stripe ou autre à créer ; au plus, modèle de plans)
@@ -108,6 +108,8 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Gammes : une ligne est « incluse » si elle est commune ou de la gamme retenue de sa pièce (ou de l'affaire si générale). Tous les totaux, la TVA, le PDF, la vue par lot et les €/m² constatés ne comptent que les lignes incluses.
 - JSON : Spring Boot 4 fournit Jackson 3 (`tools.jackson.databind.json.JsonMapper`), pas `com.fasterxml.jackson.databind`.
 - Devis de base = lignes sans avenant (`findByAffaireIdAndAvenantIsNullOrderByOrdreAsc`). En chantier (`version_chantier_id` non nul), création / modification / suppression / réordonnancement des lignes de base → 409 ; les lignes d'avenant ne sont modifiables que si l'avenant est en BROUILLON. `Totaux.de(...)` calcule HT / TVA par taux / TTC pour tout ensemble de lignes.
+- Équipe : seul le gérant administre l'entreprise (403 sinon). Accepter une invitation supprime l'entreprise créée à la première connexion si elle est vide. `EquipeService` recharge l'utilisateur dans sa transaction (celui de `AppUserService.current` est détaché).
+- Realm Keycloak : `registrationAllowed: true` (inscription). Un realm déjà importé n'est pas mis à jour (import IGNORE_EXISTING) : activer « User registration » dans la console Keycloak ou recréer le volume.
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions

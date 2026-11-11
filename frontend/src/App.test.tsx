@@ -24,7 +24,7 @@ function mockAuth(overrides: Record<string, unknown>) {
 
 const ME = {
   id: '1', subject: 's', email: 'demo@faro.local', displayName: 'Demo Faro', roles: ['user'],
-  organisation: { id: 'o', nom: 'Rénov Plus' },
+  organisation: { id: 'o', nom: 'Rénov Plus' }, roleEntreprise: 'GERANT',
 }
 
 /** Répond selon l'URL appelée, comme le ferait l'API. */

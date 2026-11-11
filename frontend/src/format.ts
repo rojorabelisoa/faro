@@ -66,3 +66,9 @@ export const LIBELLES_GAMME: Record<string, string> = {
   STANDARD: 'Standard',
   PREMIUM: 'Premium',
 }
+
+export const LIBELLES_ROLE: Record<string, string> = {
+  GERANT: 'Gérant',
+  CHARGE_ETUDES: "Chargé d'études",
+  CONDUCTEUR_TRAVAUX: 'Conducteur de travaux',
+}

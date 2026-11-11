@@ -67,7 +67,7 @@ function renderPage(devis: Devis = DEVIS) {
       totalMinHt: 8400, totalMaxHt: 15600, devisHt: 1630.2,
     }),
   }
-  const me = { id: '1', subject: 's', email: null, displayName: 'Demo', roles: [], organisation: { id: 'o', nom: 'X' } }
+  const me = { id: '1', subject: 's', email: null, displayName: 'Demo', roles: [], organisation: { id: 'o', nom: 'X' }, roleEntreprise: 'GERANT' as const }
   render(
     <SessionContext.Provider value={{ api: api as unknown as Api, me }}>
       <MemoryRouter initialEntries={['/affaires/a1']}>

@@ -8,4 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     Optional<AppUser> findBySubject(String subject);
+
+    java.util.List<AppUser> findByOrganisationIdOrderByDisplayNameAsc(UUID organisationId);
+
+    long countByOrganisationIdAndRoleEntreprise(UUID organisationId, com.faro.organisation.RoleEntreprise role);
 }

@@ -1,7 +1,7 @@
 {
   "realm": "faro",
   "enabled": true,
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "loginWithEmailAllowed": true,
   "sslRequired": "external",
   "roles": {

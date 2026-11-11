@@ -8,6 +8,8 @@ import AffairePage from './pages/AffairePage'
 import BibliothequePage from './pages/BibliothequePage'
 import LotsPage from './pages/LotsPage'
 import RatiosPage from './pages/RatiosPage'
+import EntreprisePage from './pages/EntreprisePage'
+import RejoindrePage from './pages/RejoindrePage'
 
 export default function App() {
   const auth = useAuth()
@@ -66,6 +68,8 @@ export default function App() {
             <Route path="/bibliotheque" element={<BibliothequePage />} />
             <Route path="/lots" element={<LotsPage />} />
             <Route path="/ratios" element={<RatiosPage />} />
+            <Route path="/entreprise" element={<EntreprisePage />} />
+            <Route path="/rejoindre/:code" element={<RejoindrePage />} />
           </Routes>
         </Layout>
       </BrowserRouter>
@@ -84,6 +88,7 @@ function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: (
           <NavLink to="/bibliotheque">Bibliothèque</NavLink>
           <NavLink to="/lots">Lots</NavLink>
           <NavLink to="/ratios">Ratios</NavLink>
+          <NavLink to="/entreprise">Entreprise</NavLink>
         </nav>
         <span className="utilisateur">
           {me.displayName ?? me.email ?? me.subject} · {me.organisation.nom}

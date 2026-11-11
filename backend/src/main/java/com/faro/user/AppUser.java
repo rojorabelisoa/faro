@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -13,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.faro.organisation.Organisation;
+import com.faro.organisation.RoleEntreprise;
 
 /** Utilisateur connu de faro, identifié par le "sub" du fournisseur OIDC. */
 @Entity
@@ -40,6 +43,10 @@ public class AppUser {
     @ManyToOne
     @JoinColumn(name = "organisation_id")
     private Organisation organisation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role_entreprise", nullable = false)
+    private RoleEntreprise roleEntreprise = RoleEntreprise.GERANT;
 
     protected AppUser() {
     }
@@ -92,5 +99,13 @@ public class AppUser {
 
     public void setOrganisation(Organisation organisation) {
         this.organisation = organisation;
+    }
+
+    public RoleEntreprise getRoleEntreprise() {
+        return roleEntreprise;
+    }
+
+    public void setRoleEntreprise(RoleEntreprise roleEntreprise) {
+        this.roleEntreprise = roleEntreprise;
     }
 }

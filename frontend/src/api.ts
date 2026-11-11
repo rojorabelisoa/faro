@@ -12,6 +12,23 @@ export interface Me {
   displayName: string | null
   roles: string[]
   organisation: Organisation
+  roleEntreprise: RoleEntreprise
+}
+
+export type RoleEntreprise = 'GERANT' | 'CHARGE_ETUDES' | 'CONDUCTEUR_TRAVAUX'
+
+export interface Entreprise {
+  id: string
+  nom: string
+  membres: { id: string; nom: string | null; email: string | null; role: RoleEntreprise }[]
+}
+
+export interface Invitation {
+  id: string
+  code: string
+  role: RoleEntreprise
+  email: string | null
+  expiresAt: string
 }
 
 export type TypeBien = 'APPARTEMENT' | 'MAISON' | 'EXTENSION' | 'LOCAL_TERTIAIRE' | 'AUTRE'
@@ -359,6 +376,22 @@ const json = (method: string, body: unknown): RequestInit => ({ method, body: JS
 export function createApi(token: string) {
   return {
     me: () => request<Me>(token, '/api/me'),
+
+    entreprise: () => request<Entreprise>(token, '/api/entreprise'),
+    renommerEntreprise: (nom: string) => request<void>(token, '/api/entreprise', json('PUT', { nom })),
+    changerRole: (membreId: string, role: RoleEntreprise) =>
+      request<void>(token, `/api/entreprise/membres/${membreId}/role`, json('PUT', { role })),
+    retirerMembre: (membreId: string) =>
+      request<void>(token, `/api/entreprise/membres/${membreId}`, { method: 'DELETE' }),
+    invitations: () => request<Invitation[]>(token, '/api/entreprise/invitations'),
+    inviter: (role: RoleEntreprise, email: string | null) =>
+      request<Invitation>(token, '/api/entreprise/invitations', json('POST', { role, email })),
+    revoquerInvitation: (id: string) =>
+      request<void>(token, `/api/entreprise/invitations/${id}`, { method: 'DELETE' }),
+    invitationInfo: (code: string) =>
+      request<{ entreprise: string; role: RoleEntreprise; utilisable: boolean }>(token, `/api/invitations/${code}`),
+    accepterInvitation: (code: string) =>
+      request<void>(token, `/api/invitations/${code}/accepter`, { method: 'POST' }),
 
     affaires: () => request<Affaire[]>(token, '/api/affaires'),
     affaire: (id: string) => request<Affaire>(token, `/api/affaires/${id}`),

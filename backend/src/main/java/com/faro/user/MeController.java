@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.core.GrantedAuthority;
+
+import com.faro.organisation.RoleEntreprise;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -30,11 +32,12 @@ public class MeController {
             .map(authority -> authority.substring("ROLE_".length()))
             .toList();
         return new MeResponse(user.getId(), user.getSubject(), user.getEmail(), user.getDisplayName(), roles,
-            new OrganisationResponse(user.getOrganisation().getId(), user.getOrganisation().getNom()));
+            new OrganisationResponse(user.getOrganisation().getId(), user.getOrganisation().getNom()),
+            user.getRoleEntreprise());
     }
 
     public record MeResponse(UUID id, String subject, String email, String displayName, List<String> roles,
-            OrganisationResponse organisation) {
+            OrganisationResponse organisation, RoleEntreprise roleEntreprise) {
     }
 
     public record OrganisationResponse(UUID id, String nom) {
