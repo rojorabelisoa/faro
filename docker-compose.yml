@@ -31,6 +31,8 @@ services:
       - "8180:8180"
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
+      # Comptes et sessions Keycloak conservés quand le conteneur est recréé.
+      - keycloak-data:/opt/keycloak/data
 
   backend:
     profiles: ["complet"]
@@ -62,3 +64,4 @@ services:
 
 volumes:
   postgres-data:
+  keycloak-data:

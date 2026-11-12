@@ -1,0 +1,15 @@
+{
+	# Pas de domaine : certificat signé par l'autorité locale de Caddy.
+	default_sni {$FARO_HOTE}
+}
+
+https://{$FARO_HOTE} {
+	tls internal
+	encode gzip
+	handle /auth/* {
+		reverse_proxy keycloak:8180
+	}
+	handle {
+		reverse_proxy frontend:80
+	}
+}

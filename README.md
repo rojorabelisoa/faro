@@ -42,6 +42,10 @@ Le premier lancement prend quelques minutes (construction des images). Pour tout
 
 Après un `git pull`, relancer la même commande : les images sont reconstruites avec le nouveau code.
 
+### Depuis les autres appareils du wifi
+
+Voir [`docs/reseau-local.md`](docs/reseau-local.md) : faro en HTTPS sur `https://IP-DU-PC` (téléphone, tablette).
+
 ## Lancer en local (développement)
 
 Prérequis : Docker, Java 21, Node.js 22 (Maven est fourni par `backend/mvnw`).
