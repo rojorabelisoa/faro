@@ -1,7 +1,8 @@
 # Environnement local.
 #   docker compose up -d                     → PostgreSQL + Keycloak (backend et frontend lancés à la main)
 #   docker compose --profile complet up -d --build
-#                                             → tout faro d'un coup : http://localhost:3000 (demo / demo)
+#                                             → tout faro d'un coup : http://localhost:3000 (demo / demo),
+#                                               avec des affaires d'exemple sur une base neuve
 services:
   postgres:
     image: postgres:17
@@ -41,6 +42,8 @@ services:
       FARO_OIDC_ISSUER_URI: http://localhost:8180/realms/faro
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8180/realms/faro/protocol/openid-connect/certs
       FARO_CORS_ALLOWED_ORIGINS: http://localhost:3000
+      # Affaires d'exemple chargées au premier démarrage, seulement si la base est vide.
+      FARO_DEMO_DONNEES: "true"
     depends_on:
       postgres:
         condition: service_healthy

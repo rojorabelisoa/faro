@@ -26,6 +26,9 @@ spring:
           audiences: ${FARO_OIDC_AUDIENCE:faro-api}
 
 faro:
+  demo:
+    # Charge des affaires d'exemple au premier démarrage (profil Docker « complet » uniquement).
+    donnees: ${FARO_DEMO_DONNEES:false}
   cors:
     allowed-origins: ${FARO_CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
