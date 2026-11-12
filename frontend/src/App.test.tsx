@@ -53,6 +53,7 @@ describe('App', () => {
   })
 
   it('affiche l’utilisateur, son entreprise et ses affaires', async () => {
+    window.history.pushState({}, '', '/affaires')
     mockAuth({ isAuthenticated: true, user: { access_token: 'jeton-123' } })
     const fetchSpy = mockApi({
       '/api/me': ME,

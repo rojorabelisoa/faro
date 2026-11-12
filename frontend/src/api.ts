@@ -389,6 +389,26 @@ export interface Bilan {
   }[]
 }
 
+export interface Indicateur {
+  valeur: number | null
+  /** Variation en % par rapport au mois précédent. */
+  tendance: number | null
+  serie: number[]
+  detail: string
+}
+
+export interface TableauDeBord {
+  affairesActives: Indicateur
+  signeCeMois: Indicateur
+  margeReelle: Indicateur
+  enAttenteClient: Indicateur
+  transformation: { taux: number | null; gagnees: number; perdues: number; enCours: number }
+  signeParMois: { mois: string; montantHt: number }[]
+  pipeline: { statut: StatutAffaire; nombre: number; montantHt: number }[]
+  aFaire: { type: 'AVENANT_EN_ATTENTE' | 'A_RELANCER' | 'CLIENT_A_CONSULTE'; libelle: string; affaireId: string;
+    affaire: string; date: string | null }[]
+}
+
 export interface ImportResultat {
   importes: number
   misAJour: number
@@ -486,6 +506,7 @@ export function createApi(token: string) {
     adminChangerPlan: (id: string, plan: Plan) =>
       request<void>(token, `/api/admin/organisations/${id}/plan`, json('PUT', { plan })),
 
+    tableauDeBord: () => request<TableauDeBord>(token, '/api/tableau-de-bord'),
     affaires: () => request<Affaire[]>(token, '/api/affaires'),
     affaire: (id: string) => request<Affaire>(token, `/api/affaires/${id}`),
     createAffaire: (input: AffaireInput) => request<Affaire>(token, '/api/affaires', json('POST', input)),

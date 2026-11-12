@@ -5,6 +5,7 @@ import { createApi, type Me } from './api'
 import { joursRestants } from './format'
 import { SessionContext, useSession } from './ApiContext'
 import AffairesPage from './pages/AffairesPage'
+import TableauDeBordPage from './pages/TableauDeBordPage'
 import AffairePage from './pages/AffairePage'
 import BibliothequePage from './pages/BibliothequePage'
 import LotsPage from './pages/LotsPage'
@@ -72,7 +73,8 @@ function Application() {
       <BrowserRouter>
         <Layout onLogout={() => void auth.signoutRedirect()}>
           <Routes>
-            <Route path="/" element={<AffairesPage />} />
+            <Route path="/" element={<TableauDeBordPage />} />
+            <Route path="/affaires" element={<AffairesPage />} />
             <Route path="/affaires/:id" element={<AffairePage />} />
             <Route path="/bibliotheque" element={<BibliothequePage />} />
             <Route path="/lots" element={<LotsPage />} />
@@ -112,7 +114,8 @@ function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: (
       <header className="entete">
         <span className="logo">faro</span>
         <nav>
-          <NavLink to="/" end>Affaires</NavLink>
+          <NavLink to="/" end>Tableau de bord</NavLink>
+          <NavLink to="/affaires">Affaires</NavLink>
           <NavLink to="/bibliotheque">Bibliothèque</NavLink>
           <NavLink to="/lots">Lots</NavLink>
           <NavLink to="/ratios">Ratios</NavLink>

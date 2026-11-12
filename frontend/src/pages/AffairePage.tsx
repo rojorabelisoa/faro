@@ -81,12 +81,12 @@ export default function AffairePage() {
 
   async function supprimer() {
     if (!affaire || !window.confirm(`Supprimer définitivement l'affaire « ${affaire.nom} » et tout son devis ?`)) return
-    if (await run(() => api.deleteAffaire(affaire.id))) navigate('/')
+    if (await run(() => api.deleteAffaire(affaire.id))) navigate('/affaires')
   }
 
   return (
     <>
-      <p><Link to="/">← Affaires</Link></p>
+      <p><Link to="/affaires">← Affaires</Link></p>
       <div className="titre-page">
         <div>
           <h1>{affaire.nom}</h1>

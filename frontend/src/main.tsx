@@ -4,6 +4,7 @@ import { AuthProvider } from 'react-oidc-context'
 import App from './App'
 import { oidcConfig } from './config'
 import './styles.css'
+import './styles/tableau-de-bord.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -10,7 +10,7 @@ export default function AffairesPage() {
   const navigate = useNavigate()
   const [affaires, setAffaires] = useState<Affaire[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [creation, setCreation] = useState(false)
+  const [creation, setCreation] = useState(() => new URLSearchParams(window.location.search).has('nouvelle'))
 
   useEffect(() => {
     api.affaires().then(setAffaires).catch((e: Error) => setError(e.message))
