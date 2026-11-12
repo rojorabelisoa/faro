@@ -34,7 +34,7 @@ docker compose --profile complet up -d --build
 Puis ouvrir **http://localhost:3000** et se connecter avec `demo` / `demo` (ou `admin` / `admin`).
 
 Sur une base neuve, des **données d'exemple** sont chargées : l'entreprise « Rénov Lyon (démo) », 21 ouvrages
-dans la bibliothèque et 7 affaires à tous les stades (visite, estimation, devis avec options Eco / Standard / Premium,
+dans la bibliothèque, des photos de visite et 7 affaires à tous les stades (visite, estimation, devis avec options Eco / Standard / Premium,
 chantiers avec avenants et dépenses, opération de marchand de biens, affaire perdue). Pour repartir de zéro :
 `docker compose --profile complet down -v` puis relancer.
 Le premier lancement prend quelques minutes (construction des images). Pour tout arrêter : `docker compose --profile complet down`

@@ -52,6 +52,7 @@ class DonneesDemoTest {
             .andExpect(jsonPath("$.aFaire[*].type").isNotEmpty());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM avenant WHERE statut = 'VALIDE'", Integer.class)).isEqualTo(2);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM bilan_operation", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM photo WHERE content_type = 'image/jpeg'", Integer.class)).isEqualTo(10);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM ligne_devis WHERE gamme IS NOT NULL", Integer.class)).isEqualTo(3);
     }
 }

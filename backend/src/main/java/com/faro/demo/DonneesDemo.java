@@ -188,6 +188,9 @@ public class DonneesDemo implements ApplicationRunner {
         note(a, null, "Accès par la cour, stationnement difficile : prévoir une autorisation de voirie pour la benne.");
         note(a, cuisine, "Cuisine fermée à ouvrir sur le séjour : cloison non porteuse (vérifiée avec le syndic).");
         note(a, sdb, "Baignoire à remplacer par une douche à l'italienne, évacuation à reprendre.");
+        photo(a, cuisine, PhotosDemo.Scene.CUISINE, "Cuisine – état existant");
+        photo(a, sdb, PhotosDemo.Scene.SALLE_DE_BAINS, "Salle de bains – baignoire à déposer");
+        photo(a, sejour, PhotosDemo.Scene.PIECE, "Séjour – murs à repeindre");
         ligne(a, null, "protection", "1");
         ligne(a, cuisine, "depose-cuisine", "1");
         ligne(a, cuisine, "demolition", "7.5");
@@ -226,6 +229,8 @@ public class DonneesDemo implements ApplicationRunner {
         Piece ch1 = piece(a, "Chambre 1", "13", "14.6", "2.5", TypePiece.CHAMBRE, NiveauTravaux.RENOVATION);
         Piece ch2 = piece(a, "Chambre 2", "11", "13.4", "2.5", TypePiece.CHAMBRE, NiveauTravaux.RENOVATION);
         Piece entree = piece(a, "Entrée et couloir", "9", "16", "2.5", TypePiece.ENTREE_DEGAGEMENT, NiveauTravaux.RENOVATION);
+        photo(a, sejour, PhotosDemo.Scene.PIECE, "Séjour – murs extérieurs à isoler");
+        photo(a, ch1, PhotosDemo.Scene.PIECE, "Chambre 1 – parquet d'origine");
         ligne(a, null, "protection", "1");
         ligne(a, sejour, "doublage", "52");
         ligne(a, ch1, "doublage", "24");
@@ -260,6 +265,7 @@ public class DonneesDemo implements ApplicationRunner {
         Piece piece = piece(a, "Pièce principale", "22", "19", "2.8", TypePiece.SEJOUR, NiveauTravaux.RENOVATION);
         Piece sdb = piece(a, "Salle d'eau", "3.5", "7.6", "2.5", TypePiece.SALLE_DE_BAINS, NiveauTravaux.RENOVATION_LOURDE);
         Piece coin = piece(a, "Coin cuisine", "5", "9", "2.8", TypePiece.CUISINE, NiveauTravaux.RENOVATION);
+        photo(a, sdb, PhotosDemo.Scene.SALLE_DE_BAINS, "Salle d'eau – après travaux");
         ligne(a, null, "protection", "1");
         ligne(a, piece, "parquet", "22");
         ligne(a, piece, "peinture", "75");
@@ -288,6 +294,8 @@ public class DonneesDemo implements ApplicationRunner {
             "Le client hésite sur la finition de la salle de bains : trois gammes proposées.");
         Piece cuisine = piece(a, "Cuisine", "9", "12", "2.6", TypePiece.CUISINE, NiveauTravaux.RENOVATION);
         Piece sdb = piece(a, "Salle de bains", "5.5", "9.6", "2.5", TypePiece.SALLE_DE_BAINS, NiveauTravaux.RENOVATION);
+        photo(a, cuisine, PhotosDemo.Scene.CUISINE, "Cuisine – à remplacer entièrement");
+        photo(a, sdb, PhotosDemo.Scene.SALLE_DE_BAINS, "Salle de bains – faïence d'origine");
         ligne(a, null, "protection", "1");
         ligne(a, cuisine, "depose-cuisine", "1");
         ligne(a, cuisine, "alim-cuisine", "1");
@@ -323,7 +331,9 @@ public class DonneesDemo implements ApplicationRunner {
     private void extensionCaluire() {
         Affaire a = affaire("Maison Caluire – extension", "M. et Mme Rossi", "rossi@example.fr", "06 55 44 33 22",
             "27 montée des Forts, 69300 Caluire-et-Cuire", TypeBien.EXTENSION, null);
-        piece(a, "Extension séjour", "25", "20", "2.7", TypePiece.SEJOUR, NiveauTravaux.RENOVATION_LOURDE);
+        Piece extension = piece(a, "Extension séjour", "25", "20", "2.7", TypePiece.SEJOUR, NiveauTravaux.RENOVATION_LOURDE);
+        photo(a, extension, PhotosDemo.Scene.JARDIN, "Jardin – emprise de l'extension");
+        photo(a, null, PhotosDemo.Scene.JARDIN, "Façade côté jardin");
         note(a, null, "Visite du 4 : extension de 25 m² côté jardin. Permis déposé par l'architecte, réponse attendue.");
         note(a, null, "Le client souhaite une baie vitrée de 4 m et un sol identique à l'existant (parquet chêne).");
         jdbc.update("UPDATE affaire SET created_at = now() - interval '8 days', updated_at = now() - interval '8 days' WHERE id = ?",
@@ -362,6 +372,16 @@ public class DonneesDemo implements ApplicationRunner {
     private void note(Affaire a, Piece piece, String texte) {
         visiteService.addObservation(organisation, a.getId(), new ObservationRequest(piece == null ? null : piece.getId(), texte),
             AUTEUR);
+    }
+
+    /** Photo dessinée ; ignorée si le dessin est impossible (ex. polices absentes du conteneur). */
+    private void photo(Affaire a, Piece piece, PhotosDemo.Scene scene, String legende) {
+        try {
+            visiteService.addPhoto(organisation, a.getId(), piece == null ? null : piece.getId(), legende, "image/jpeg",
+                PhotosDemo.jpeg(scene, legende, legende.hashCode()));
+        } catch (Exception | Error e) {
+            LOG.warn("Photo de démonstration ignorée ({}) : {}", legende, e.toString());
+        }
     }
 
     private void ligne(Affaire a, Piece piece, String ouvrage, String quantite) {
