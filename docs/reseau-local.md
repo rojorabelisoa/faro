@@ -23,6 +23,10 @@ Par défaut, WSL ne rend les ports accessibles qu'au PC lui-même.
    ```ini
    [wsl2]
    networkingMode=mirrored
+
+   [experimental]
+   # Sans cette ligne, le PC lui-même ne peut pas ouvrir https://son-IP (les autres appareils, si).
+   hostAddressLoopback=true
    ```
 2. Dans PowerShell **en administrateur** :
    ```powershell
@@ -34,13 +38,19 @@ Par défaut, WSL ne rend les ports accessibles qu'au PC lui-même.
    ```
 3. Rouvre Ubuntu (et `sudo service docker start` si Docker ne redémarre pas tout seul).
 
+Vérification depuis Windows (PowerShell, avec `curl.exe` et non `curl`) une fois faro lancé :
+`curl.exe -k https://192.168.1.84/api/health` doit répondre `{"status":"UP"}`.
+
+Si un appareil n'y arrive pas : le profil réseau Windows doit être « Privé » (`Get-NetConnectionProfile`),
+et l'appareil ne doit pas être sur le wifi invité de la box (qui isole les appareils).
+
 Le mode `mirrored` demande Windows 11 (22H2 ou plus récent). Sous Windows 10, remplace l'étape 1 par une redirection
 de port, à refaire à chaque redémarrage (adresse de WSL : `hostname -I` dans Ubuntu) :
 `netsh interface portproxy add v4tov4 listenport=443 listenaddress=0.0.0.0 connectport=443 connectaddress=<IP de WSL>`.
 
 ## 3. Lancer faro en mode réseau
 
-Dans Ubuntu, en remplaçant l'adresse par la tienne :
+Dans **Ubuntu (WSL)**, pas dans PowerShell, en remplaçant l'adresse par la tienne :
 
 ```bash
 cd ~/git/faro
