@@ -23,6 +23,7 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 
 - Phase 3 terminée pour tout ce que Claude pouvait faire (points 4 à 23). Restent : points 1 à 3 (utilisateur) et les parties bloquées listées dans « Bloquants / questions ».
 - Prochaine étape : démo à la chargée d'études avec toutes les fonctions, puis prioriser ses retours.
+- EN COURS (2026-11-12) : tableau de bord « glassy » demandé par l'utilisateur (inspiré d'une vidéo TikTok « Glassy Dashboard V24 » : cartes en verre dépoli corail / pêche, accueil, anneau de progression, cartes chiffres avec mini-courbes, graphiques). Backend `com.faro.tableaubord` (`GET /api/tableau-de-bord`), frontend `pages/TableauDeBordPage.tsx` en page d'accueil (`/`), la liste des affaires passe sur `/affaires`.
 - Reprise automatique : la tâche planifiée « Reprise backlog faro » (`trig_01Dtkand7AoEABUZATjsPNrw`) a été désactivée à la fin du backlog (2026-11-11).
 - En parallèle : entretien métier non terminé (questions de suivi dans `docs/brainstorm.md`). L'utilisateur a demandé de commencer sans attendre.
 
