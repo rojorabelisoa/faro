@@ -1,5 +1,7 @@
-# Environnement de développement local : PostgreSQL + Keycloak (fournisseur OIDC).
-# Le backend et le frontend tournent sur la machine hôte (voir README).
+# Environnement local.
+#   docker compose up -d                     → PostgreSQL + Keycloak (backend et frontend lancés à la main)
+#   docker compose --profile complet up -d --build
+#                                             → tout faro d'un coup : http://localhost:3000 (demo / demo)
 services:
   postgres:
     image: postgres:17
@@ -28,6 +30,32 @@ services:
       - "8180:8180"
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
+
+  backend:
+    profiles: ["complet"]
+    build: ./backend
+    environment:
+      FARO_DB_URL: jdbc:postgresql://postgres:5432/faro
+      # Le navigateur obtient ses jetons sur localhost:8180 (émetteur vérifié) ; les clés sont lues
+      # directement sur le réseau Docker.
+      FARO_OIDC_ISSUER_URI: http://localhost:8180/realms/faro
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8180/realms/faro/protocol/openid-connect/certs
+      FARO_CORS_ALLOWED_ORIGINS: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    profiles: ["complet"]
+    build:
+      context: ./frontend
+      args:
+        VITE_OIDC_AUTHORITY: http://localhost:8180/realms/faro
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+      - keycloak
 
 volumes:
   postgres-data:

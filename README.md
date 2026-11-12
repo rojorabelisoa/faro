@@ -23,12 +23,26 @@ Application web **Java (Spring Boot) + React**, avec authentification **OAuth2 /
 - **Équipe** : gérant, chargé d'études, conducteur de travaux, invitations ; **offres** et page d'administration du SaaS.
 - **Module investisseur** : bilan d'opération, rentabilité, TRI, scénarios.
 
-## Lancer en local
+## Tout lancer en une commande
+
+Avec Docker (Docker Desktop, ou Docker dans WSL sous Windows), depuis le dossier du projet :
+
+```bash
+docker compose --profile complet up -d --build
+```
+
+Puis ouvrir **http://localhost:3000** et se connecter avec `demo` / `demo` (ou `admin` / `admin`).
+Le premier lancement prend quelques minutes (construction des images). Pour tout arrêter : `docker compose --profile complet down`
+(ajouter `-v` pour effacer aussi les données).
+
+Après un `git pull`, relancer la même commande : les images sont reconstruites avec le nouveau code.
+
+## Lancer en local (développement)
 
 Prérequis : Docker, Java 21, Node.js 22 (Maven est fourni par `backend/mvnw`).
 
 ```bash
-# 1. PostgreSQL + Keycloak (le realm faro est importé automatiquement)
+# 1. PostgreSQL + Keycloak seulement (le realm faro est importé automatiquement)
 docker compose up -d
 
 # 2. Backend (http://localhost:8080)

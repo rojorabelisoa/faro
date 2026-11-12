@@ -6,8 +6,14 @@
   "sslRequired": "external",
   "roles": {
     "realm": [
-      { "name": "user", "description": "Utilisateur de faro" },
-      { "name": "admin", "description": "Administrateur de faro" }
+      {
+        "name": "user",
+        "description": "Utilisateur de faro"
+      },
+      {
+        "name": "admin",
+        "description": "Administrateur de faro"
+      }
     ]
   },
   "clients": [
@@ -19,11 +25,17 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "implicitFlowEnabled": false,
-      "redirectUris": ["http://localhost:5173/*"],
-      "webOrigins": ["http://localhost:5173"],
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:3000"
+      ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173/*"
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:3000/*"
       },
       "protocolMappers": [
         {
@@ -60,8 +72,17 @@
       "firstName": "Demo",
       "lastName": "Faro",
       "enabled": true,
-      "credentials": [{ "type": "password", "value": "demo", "temporary": false }],
-      "realmRoles": ["user"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user"
+      ],
+      "id": "00000000-0000-4000-8000-000000000001"
     },
     {
       "username": "admin",
@@ -70,8 +91,18 @@
       "firstName": "Admin",
       "lastName": "Faro",
       "enabled": true,
-      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
-      "realmRoles": ["user", "admin"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "admin"
+      ],
+      "id": "00000000-0000-4000-8000-000000000002"
     }
   ]
 }
