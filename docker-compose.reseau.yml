@@ -22,6 +22,8 @@ services:
       FARO_CORS_ALLOWED_ORIGINS: https://${FARO_HOTE}
 
   frontend:
+    # Servi uniquement par Caddy (https://FARO_HOTE) : pas de port 3000 sur la machine.
+    ports: !reset []
     build:
       args:
         # Vide : l'adresse de connexion est déduite de celle de la page (https://FARO_HOTE/auth/realms/faro).
