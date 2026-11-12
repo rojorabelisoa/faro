@@ -51,7 +51,15 @@ function Application() {
   }
 
   if (auth.error) {
-    return <main className="centre" role="alert">Erreur de connexion : {auth.error.message}</main>
+    // Session périmée (ex. Keycloak réinitialisé) : on l'efface et on repart de la page de connexion.
+    return (
+      <main className="centre" role="alert">
+        <p>Votre session a expiré ou n'est plus valide ({auth.error.message}).</p>
+        <button className="primaire" onClick={() => void auth.removeUser().then(() => auth.signinRedirect())}>
+          Se reconnecter
+        </button>
+      </main>
+    )
   }
 
   if (!auth.isAuthenticated) {

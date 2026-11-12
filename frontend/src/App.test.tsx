@@ -16,6 +16,7 @@ function mockAuth(overrides: Record<string, unknown>) {
     user: null,
     signinRedirect: vi.fn(),
     signoutRedirect: vi.fn(),
+    removeUser: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
   mockedUseAuth.mockReturnValue(auth as unknown as ReturnType<typeof useAuth>)
@@ -72,6 +73,16 @@ describe('App', () => {
     expect(screen.getByText('Visite')).toBeInTheDocument()
     expect(fetchSpy.mock.calls[0][0]).toBe('http://localhost:8080/api/me')
     expect(fetchSpy.mock.calls[0][1]).toMatchObject({ headers: { Authorization: 'Bearer jeton-123' } })
+  })
+
+  it('propose de se reconnecter quand la session n’est plus valide', async () => {
+    const auth = mockAuth({ error: new Error('Invalid refresh token') })
+    render(<App />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Se reconnecter' }))
+
+    expect(auth.removeUser).toHaveBeenCalled()
+    expect(auth.signinRedirect).toHaveBeenCalled()
   })
 
   it('affiche une erreur si l’API refuse le jeton', async () => {
