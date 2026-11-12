@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from 'react-oidc-context'
-import { BrowserRouter, NavLink, Route, Routes } from 'react-router'
+import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router'
 import { createApi, type Me } from './api'
-import { joursRestants } from './format'
+import { joursRestants, LIBELLES_ROLE } from './format'
+import {
+  IconeAccueil, IconeAdmin, IconeAffaires, IconeBibliotheque, IconeEntreprise, IconeLots, IconeMenu, IconeRatios,
+  IconeSortie,
+} from './components/Icones'
 import { SessionContext, useSession } from './ApiContext'
 import AffairesPage from './pages/AffairesPage'
 import TableauDeBordPage from './pages/TableauDeBordPage'
@@ -53,7 +57,7 @@ function Application() {
   if (!auth.isAuthenticated) {
     return (
       <main className="centre">
-        <h1>faro</h1>
+        <h1 className="logo">faro</h1>
         <p>Le pilotage de vos chantiers de rénovation.</p>
         <button className="primaire" onClick={() => void auth.signinRedirect()}>Se connecter</button>
       </main>
@@ -107,28 +111,62 @@ function BandeauEssai() {
   )
 }
 
+const NAVIGATION = [
+  { to: '/', libelle: 'Tableau de bord', icone: <IconeAccueil />, fin: true },
+  { to: '/affaires', libelle: 'Affaires', icone: <IconeAffaires /> },
+  { to: '/bibliotheque', libelle: 'Bibliothèque', icone: <IconeBibliotheque /> },
+]
+const REGLAGES = [
+  { to: '/lots', libelle: 'Lots', icone: <IconeLots /> },
+  { to: '/ratios', libelle: 'Ratios', icone: <IconeRatios /> },
+  { to: '/entreprise', libelle: 'Entreprise', icone: <IconeEntreprise /> },
+]
+
+const initiales = (nom: string) => nom.split(/\s+/).filter(Boolean).slice(0, 2).map((m) => m[0].toUpperCase()).join('')
+
+/** Barre latérale « verre dépoli » (tiroir sur mobile) et zone principale. */
 function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: () => void }) {
   const { me } = useSession()
+  const [menuOuvert, setMenuOuvert] = useState(false)
+  const location = useLocation()
+  useEffect(() => setMenuOuvert(false), [location.pathname])
+  const nom = me.displayName ?? me.email ?? me.subject
+  const lien = (item: { to: string; libelle: string; icone: React.ReactNode; fin?: boolean }) => (
+    <NavLink key={item.to} to={item.to} end={item.fin}>{item.icone}{item.libelle}</NavLink>
+  )
+
   return (
-    <>
-      <header className="entete">
-        <span className="logo">faro</span>
-        <nav>
-          <NavLink to="/" end>Tableau de bord</NavLink>
-          <NavLink to="/affaires">Affaires</NavLink>
-          <NavLink to="/bibliotheque">Bibliothèque</NavLink>
-          <NavLink to="/lots">Lots</NavLink>
-          <NavLink to="/ratios">Ratios</NavLink>
-          <NavLink to="/entreprise">Entreprise</NavLink>
-          {me.roles.includes('admin') && <NavLink to="/admin">Admin SaaS</NavLink>}
+    <div className={`app ${menuOuvert ? 'menu-ouvert' : ''}`}>
+      <aside className="barre-laterale" aria-label="Navigation">
+        <div className="marque">
+          <span className="marque-logo" aria-hidden="true">f</span>
+          <div><strong>faro</strong><span>{me.organisation.nom}</span></div>
+        </div>
+        <nav aria-label="Principale">
+          <div className="section-nav">Pilotage</div>
+          {NAVIGATION.map(lien)}
+          <div className="section-nav">Réglages</div>
+          {REGLAGES.map(lien)}
+          {me.roles.includes('admin') && lien({ to: '/admin', libelle: 'Admin SaaS', icone: <IconeAdmin /> })}
         </nav>
-        <span className="utilisateur">
-          {me.displayName ?? me.email ?? me.subject} · {me.organisation.nom}
-        </span>
-        <button onClick={onLogout}>Se déconnecter</button>
-      </header>
-      <BandeauEssai />
-      <main className="contenu">{children}</main>
-    </>
+        <div className="profil">
+          <span className="avatar" aria-hidden="true">{initiales(nom)}</span>
+          <div className="profil-texte">
+            <strong>{nom}</strong>
+            <span>{LIBELLES_ROLE[me.roleEntreprise]}</span>
+          </div>
+          <button onClick={onLogout} aria-label="Se déconnecter" title="Se déconnecter"><IconeSortie /></button>
+        </div>
+      </aside>
+      <div className="voile" onClick={() => setMenuOuvert(false)} />
+      <div className="principal">
+        <header className="barre-mobile">
+          <button onClick={() => setMenuOuvert(true)} aria-label="Ouvrir le menu" aria-expanded={menuOuvert}><IconeMenu /></button>
+          <span className="logo">faro</span>
+        </header>
+        <BandeauEssai />
+        <main className="contenu">{children}</main>
+      </div>
+    </div>
   )
 }

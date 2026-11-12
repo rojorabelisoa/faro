@@ -1,13 +1,11 @@
 /* Tableau de bord « verre dépoli » : cartes translucides sur fond pêche / corail. */
 .tdb {
-  --tdb-fond: radial-gradient(1200px 600px at 10% -10%, #ffd9c7 0%, transparent 60%),
-              radial-gradient(900px 500px at 110% 10%, #f6b49c 0%, transparent 55%),
-              linear-gradient(160deg, #fbeee8 0%, #f3d3c4 55%, #e9b9a5 100%);
-  --tdb-verre: rgba(255, 255, 255, 0.55);
-  --tdb-verre-bord: rgba(255, 255, 255, 0.7);
-  --tdb-ombre: 0 10px 40px rgba(120, 50, 30, 0.14);
-  --tdb-texte: #2b1a14;
-  --tdb-texte-2: #6b4a3e;
+  /* Reprend le thème global (verre dépoli) ; seules les teintes des graphiques sont propres au tableau de bord. */
+  --tdb-verre: var(--surface);
+  --tdb-verre-bord: var(--bord-verre);
+  --tdb-ombre: var(--ombre);
+  --tdb-texte: var(--texte);
+  --tdb-texte-2: var(--discret);
   --tdb-accent: #d9482b;
   --tdb-corail: linear-gradient(140deg, #f2785c 0%, #e05235 55%, #c63f24 100%);
   --tdb-rampe-0: #f7c4b3;
@@ -16,23 +14,10 @@
   --tdb-rampe-3: #b83a1f;
   --tdb-piste: rgba(120, 50, 30, 0.08);
   color: var(--tdb-texte);
-  background: var(--tdb-fond);
-  /* Pleine largeur, même si le contenu de la page est centré et limité en largeur. */
-  margin: -1.5rem calc(50% - 50vw) -4rem;
-  padding: 1.5rem max(16px, calc(50vw - 38rem)) 3rem;
-  min-height: calc(100vh - 60px);
 }
 
 @media (prefers-color-scheme: dark) {
   .tdb {
-    --tdb-fond: radial-gradient(1000px 500px at 0% 0%, #5a2a1c 0%, transparent 60%),
-                radial-gradient(800px 500px at 100% 10%, #4a1f15 0%, transparent 55%),
-                linear-gradient(160deg, #1d1412 0%, #2a1d1a 60%, #241612 100%);
-    --tdb-verre: rgba(255, 255, 255, 0.07);
-    --tdb-verre-bord: rgba(255, 255, 255, 0.12);
-    --tdb-ombre: 0 10px 40px rgba(0, 0, 0, 0.35);
-    --tdb-texte: #f6e8e2;
-    --tdb-texte-2: #cdb2a7;
     --tdb-accent: #e8674a;
     --tdb-rampe-0: #7a2e1f;
     --tdb-rampe-1: #b2462c;
@@ -46,7 +31,7 @@
 .tdb a { color: inherit; }
 
 .tdb-entete { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;
-  max-width: 76rem; margin: 0 auto 1.25rem; }
+  margin: 0 0 1.25rem; }
 .tdb-entete h1 { font-size: 1.9rem; letter-spacing: -0.02em; }
 .tdb-sous-titre { margin: 0.25rem 0 0; color: var(--tdb-texte-2); }
 .tdb-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
@@ -55,7 +40,7 @@
 .tdb-bouton.sombre { background: #2b1a14; color: #fff; border-color: #2b1a14; }
 .tdb-bouton.clair { background: #fff; color: #c63f24; border-color: #fff; }
 
-.tdb-grille { max-width: 76rem; margin: 0 auto; display: grid; gap: 1rem;
+.tdb-grille { display: grid; gap: 1rem;
   grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 .verre, .verre-corail { border-radius: 22px; padding: 1.1rem; box-shadow: var(--tdb-ombre); position: relative; }
@@ -125,6 +110,11 @@
 .graphique-signe svg { width: 100%; height: auto; display: block; overflow: visible; }
 .graphique-signe .axe { stroke: var(--tdb-texte-2); stroke-opacity: 0.25; }
 .graphique-signe .etiquette-axe { font-size: 11px; fill: var(--tdb-texte-2); text-transform: capitalize; }
+/* Sur petit écran le graphique rétrécit : un mois sur deux, en plus grand. */
+@media (max-width: 560px) {
+  .graphique-signe .etiquette-axe { font-size: 20px; }
+  .graphique-signe .etiquette-axe.impair { display: none; }
+}
 .graphique-signe .barre { fill: var(--tdb-accent); opacity: 0.85; }
 .graphique-signe .barre.active { opacity: 1; }
 .graphique-signe .reticule { stroke: var(--tdb-texte-2); stroke-opacity: 0.35; stroke-dasharray: 3 3; }
@@ -147,7 +137,7 @@
 .pastille-couleur { width: 10px; height: 10px; border-radius: 3px; }
 .mini-courbe { flex-shrink: 0; }
 
-@media (max-width: 1000px) {
+@media (max-width: 1150px) {
   .tdb-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tdb-hero, .tdb-large, .tdb-etroit { grid-column: span 2; }
   .tdb-agenda { grid-column: span 2; }
@@ -160,4 +150,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .tdb * { transition: none !important; animation: none !important; }
+}
+@media (prefers-color-scheme: dark) {
+  .tdb-bouton.sombre { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
 }

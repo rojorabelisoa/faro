@@ -64,7 +64,10 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(await screen.findByText('Demo Faro · Rénov Plus')).toBeInTheDocument()
+    const navigation = await screen.findByRole('complementary', { name: 'Navigation' })
+    expect(navigation).toHaveTextContent('Demo Faro')
+    expect(navigation).toHaveTextContent('Rénov Plus')
+    expect(navigation).toHaveTextContent('Gérant')
     expect(await screen.findByRole('link', { name: 'T3 Victor Hugo' })).toHaveAttribute('href', '/affaires/a1')
     expect(screen.getByText('Visite')).toBeInTheDocument()
     expect(fetchSpy.mock.calls[0][0]).toBe('http://localhost:8080/api/me')

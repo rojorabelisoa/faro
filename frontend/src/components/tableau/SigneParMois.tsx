@@ -44,7 +44,8 @@ export default function SigneParMois({ donnees }: { donnees: { mois: string; mon
                   style={{ transformOrigin: `0 ${hauteur - marge.bas}px` }}
                   transition={{ duration: 0.6, delay: 0.04 * i, ease: [0.16, 1, 0.3, 1] }} />
               )}
-              <text x={marge.gauche + i * pas + pas / 2} y={hauteur - 8} textAnchor="middle" className="etiquette-axe">
+              <text x={marge.gauche + i * pas + pas / 2} y={hauteur - 8} textAnchor="middle"
+                className={(donnees.length - 1 - i) % 2 === 1 ? 'etiquette-axe impair' : 'etiquette-axe'}>
                 {moisCourt.format(versDate(d.mois)).replace('.', '')}
               </text>
             </g>
