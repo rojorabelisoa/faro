@@ -46,6 +46,8 @@ services:
       FARO_CORS_ALLOWED_ORIGINS: http://localhost:3000
       # Affaires d'exemple chargées au premier démarrage, seulement si la base est vide.
       FARO_DEMO_DONNEES: "true"
+      # Le frontend (nginx) est le seul proxy devant le backend : voir faro.public.limite.
+      FARO_PROXYS_DE_CONFIANCE: "1"
     depends_on:
       postgres:
         condition: service_healthy

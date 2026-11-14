@@ -20,6 +20,8 @@ services:
       FARO_OIDC_ISSUER_URI: https://${FARO_HOTE}/auth/realms/faro
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8180/auth/realms/faro/protocol/openid-connect/certs
       FARO_CORS_ALLOWED_ORIGINS: https://${FARO_HOTE}
+      # Caddy puis nginx devant le backend : voir faro.public.limite.
+      FARO_PROXYS_DE_CONFIANCE: "2"
 
   frontend:
     # Servi uniquement par Caddy (https://FARO_HOTE) : pas de port 3000 sur la machine.

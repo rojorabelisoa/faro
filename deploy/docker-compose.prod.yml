@@ -50,6 +50,9 @@ services:
       # Clés de signature lues directement sur le réseau interne ; l'émetteur reste vérifié.
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/faro/protocol/openid-connect/certs
       FARO_CORS_ALLOWED_ORIGINS: https://${FARO_DOMAINE}
+      # Caddy puis nginx (frontend) devant le backend : adresse du client lue dans X-Forwarded-For
+      # pour limiter les requêtes de l'espace client (voir docs/deploiement.md).
+      FARO_PROXYS_DE_CONFIANCE: "2"
     depends_on:
       postgres:
         condition: service_healthy

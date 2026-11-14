@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 
 import com.faro.affaire.Affaire;
 
-/** Lien secret donnant au client l'accès à son affaire, sans compte. Révocable. */
+/** Lien secret donnant au client l'accès à son affaire, sans compte. Révocable, expire (prolongeable). */
 @Entity
 @Table(name = "acces_client")
 public class AccesClient {
@@ -34,6 +34,9 @@ public class AccesClient {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "expire_at", nullable = false)
+    private Instant expireAt;
+
     @Column(name = "revoque_at")
     private Instant revoqueAt;
 
@@ -43,10 +46,11 @@ public class AccesClient {
     protected AccesClient() {
     }
 
-    public AccesClient(Affaire affaire, String code) {
+    public AccesClient(Affaire affaire, String code, Instant expireAt) {
         this.affaire = affaire;
         this.code = code;
         this.createdAt = Instant.now();
+        this.expireAt = expireAt;
     }
 
     public UUID getId() {
@@ -63,6 +67,18 @@ public class AccesClient {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getExpireAt() {
+        return expireAt;
+    }
+
+    public boolean estExpire(Instant maintenant) {
+        return !expireAt.isAfter(maintenant);
+    }
+
+    void prolongerJusqua(Instant expireAt) {
+        this.expireAt = expireAt;
     }
 
     public Instant getRevoqueAt() {

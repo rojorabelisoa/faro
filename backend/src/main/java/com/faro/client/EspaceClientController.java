@@ -50,6 +50,12 @@ public class EspaceClientController {
         return EspaceClientResponse.Lien.from(service.creerLien(organisation, affaireId));
     }
 
+    @PostMapping("/api/affaires/{affaireId}/acces-client/{id}/prolonger")
+    public EspaceClientResponse.Lien prolonger(@CurrentOrganisation Organisation organisation,
+            @PathVariable UUID affaireId, @PathVariable UUID id) {
+        return EspaceClientResponse.Lien.from(service.prolonger(organisation, affaireId, id));
+    }
+
     @DeleteMapping("/api/affaires/{affaireId}/acces-client/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void revoquer(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,

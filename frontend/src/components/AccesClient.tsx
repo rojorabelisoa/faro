@@ -3,6 +3,7 @@ import type { LienClient } from '../api'
 import { useSession } from '../ApiContext'
 
 const lien = (code: string) => `${window.location.origin}/client/${code}`
+const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' })
 
 /** Liens secrets de l'espace client de l'affaire (consultation, choix des gammes, validation des avenants). */
 export default function AccesClient({ affaireId }: { affaireId: string }) {
@@ -42,7 +43,8 @@ export default function AccesClient({ affaireId }: { affaireId: string }) {
       </div>
       <p className="discret">
         Le client consulte son devis, choisit ses finitions et valide ses avenants, sans créer de compte.
-        Toute personne ayant le lien y a accès : révoquez-le s'il a circulé.
+        Toute personne ayant le lien y a accès : révoquez-le s'il a circulé. Un lien est valable 90 jours,
+        prolongeable.
       </p>
       {error && <p role="alert" className="erreur">{error}</p>}
       {info && <p role="status" className="info" onClick={() => setInfo(null)}>{info}</p>}
@@ -53,9 +55,14 @@ export default function AccesClient({ affaireId }: { affaireId: string }) {
               <code className="lien-invitation">{lien(l.code)}</code>
               <span className="discret"> · {l.derniereVisite
                 ? `dernière visite le ${new Date(l.derniereVisite).toLocaleString('fr-FR')}` : 'pas encore ouvert'}</span>
+              {l.expire
+                ? <span className="avertissement"> · expiré depuis le {date.format(new Date(l.expireAt))}</span>
+                : <span className="discret"> · valable jusqu'au {date.format(new Date(l.expireAt))}</span>}
             </span>
             <span>
-              <button onClick={() => void copier(l.code)}>Copier</button>{' '}
+              {!l.expire && <><button onClick={() => void copier(l.code)}>Copier</button>{' '}</>}
+              <button onClick={() => void run(() => api.prolongerLienClient(affaireId, l.id))}
+                title="Valable 90 jours à partir d'aujourd'hui">Prolonger</button>{' '}
               <button className="danger" onClick={() => void run(() => api.revoquerLienClient(affaireId, l.id))}>Révoquer</button>
             </span>
           </li>

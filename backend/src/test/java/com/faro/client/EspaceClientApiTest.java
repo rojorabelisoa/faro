@@ -1,6 +1,7 @@
 package com.faro.client;
 
 import static com.faro.TestTokens.user;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,6 +10,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.Duration;
+import java.time.Instant;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +56,7 @@ class EspaceClientApiTest {
                 {"Faïence rectifiée", "800", "\"STANDARD\""}}) {
             equipe("/api/affaires/" + affaireId + "/lignes", """
                 {"pieceId": "%s", "lotId": "%s", "designation": "%s", "unite": "U", "quantite": 1,
-                 "prixUnitaireHt": %s, "gamme": %s}
+                 "prixUnitaireHt": %s, "gamme": %s, "debourseUnitaireHt": 100}
                 """.formatted(sdb, lot, l[0], l[1], l[2]));
         }
         code = JsonPath.read(equipe("/api/affaires/" + affaireId + "/acces-client", ""), "$.code");
@@ -137,6 +141,56 @@ class EspaceClientApiTest {
         mockMvc.perform(get("/api/public/client/inconnu")).andExpect(status().isNotFound());
         mockMvc.perform(get("/api/affaires")).andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/affaires/" + affaireId + "/acces-client").with(user("espace-autre")))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void theClientNeverSeesTheCompanyCosts() throws Exception {
+        mockMvc.perform(get("/api/public/client/" + code))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.devis.lignes[0].designation").exists())
+            .andExpect(jsonPath("$.devis.lignes[0].debourseUnitaireHt").doesNotExist());
+    }
+
+    @Test
+    void aLinkExpiresAfter90DaysAndCanBeExtended() throws Exception {
+        String liens = mockMvc.perform(get("/api/affaires/" + affaireId + "/acces-client").with(user(SUB)))
+            .andExpect(jsonPath("$[0].expire").value(false))
+            .andReturn().getResponse().getContentAsString();
+        String lien = JsonPath.read(liens, "$[0].id");
+        Instant expiration = Instant.parse(JsonPath.read(liens, "$[0].expireAt"));
+        assertThat(Duration.between(Instant.now(), expiration).toDays()).isBetween(89L, 90L);
+
+        // Expiré : le client reçoit la même réponse que pour un lien inconnu, partout.
+        jdbc.update("UPDATE acces_client SET expire_at = now() - INTERVAL '1 minute'");
+        String inconnu = mockMvc.perform(get("/api/public/client/inconnu")).andExpect(status().isNotFound())
+            .andReturn().getResponse().getContentAsString();
+        mockMvc.perform(get("/api/public/client/" + code)).andExpect(status().isNotFound())
+            .andExpect(content().json(inconnu.replace("/api/public/client/inconnu", "/api/public/client/" + code)));
+        mockMvc.perform(get("/api/public/client/" + code + "/devis.pdf")).andExpect(status().isNotFound());
+        mockMvc.perform(put("/api/public/client/" + code + "/gamme")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"gamme\": \"ECO\"}"))
+            .andExpect(status().isNotFound());
+
+        // L'entreprise le voit toujours, expiré, et le prolonge de 90 jours à partir d'aujourd'hui.
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/acces-client").with(user(SUB)))
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].expire").value(true));
+        mockMvc.perform(post("/api/affaires/" + affaireId + "/acces-client/" + lien + "/prolonger").with(user("espace-autre")))
+            .andExpect(status().isNotFound());
+        String prolonge = mockMvc.perform(post("/api/affaires/" + affaireId + "/acces-client/" + lien + "/prolonger")
+                .with(user(SUB)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.expire").value(false))
+            .andReturn().getResponse().getContentAsString();
+        assertThat(Duration.between(Instant.now(), Instant.parse(JsonPath.read(prolonge, "$.expireAt"))).toDays())
+            .isBetween(89L, 90L);
+        mockMvc.perform(get("/api/public/client/" + code)).andExpect(status().isOk());
+
+        // Un lien révoqué ne se prolonge pas.
+        mockMvc.perform(delete("/api/affaires/" + affaireId + "/acces-client/" + lien).with(user(SUB)))
+            .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/affaires/" + affaireId + "/acces-client/" + lien + "/prolonger").with(user(SUB)))
             .andExpect(status().isNotFound());
     }
 }

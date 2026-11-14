@@ -332,6 +332,9 @@ export interface LienClient {
   code: string
   createdAt: string
   derniereVisite: string | null
+  /** Au-delà, le lien ne donne plus accès (il peut être prolongé). */
+  expireAt: string
+  expire: boolean
 }
 
 /** API de l'espace client : sans compte, le code secret du lien fait office d'accès. */
@@ -619,6 +622,8 @@ export function createApi(token: string) {
     liensClient: (affaireId: string) => request<LienClient[]>(token, `/api/affaires/${affaireId}/acces-client`),
     creerLienClient: (affaireId: string) =>
       request<LienClient>(token, `/api/affaires/${affaireId}/acces-client`, { method: 'POST' }),
+    prolongerLienClient: (affaireId: string, id: string) =>
+      request<LienClient>(token, `/api/affaires/${affaireId}/acces-client/${id}/prolonger`, { method: 'POST' }),
     revoquerLienClient: (affaireId: string, id: string) =>
       request<void>(token, `/api/affaires/${affaireId}/acces-client/${id}`, { method: 'DELETE' }),
 

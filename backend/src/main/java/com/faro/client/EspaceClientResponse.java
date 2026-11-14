@@ -25,10 +25,13 @@ public record EspaceClientResponse(
     public record Lot(UUID id, String code, String nom) {
     }
 
-    public record Lien(UUID id, String code, Instant createdAt, Instant derniereVisite) {
+    /** expire : la date d'expiration est passée, le lien ne donne plus accès (il peut être prolongé). */
+    public record Lien(UUID id, String code, Instant createdAt, Instant derniereVisite, Instant expireAt,
+            boolean expire) {
 
         static Lien from(AccesClient acces) {
-            return new Lien(acces.getId(), acces.getCode(), acces.getCreatedAt(), acces.getDerniereVisite());
+            return new Lien(acces.getId(), acces.getCode(), acces.getCreatedAt(), acces.getDerniereVisite(),
+                acces.getExpireAt(), acces.estExpire(Instant.now()));
         }
     }
 }

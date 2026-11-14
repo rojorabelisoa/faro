@@ -31,6 +31,18 @@ faro:
     donnees: ${FARO_DEMO_DONNEES:false}
   cors:
     allowed-origins: ${FARO_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  client:
+    # Durée de validité d'un lien d'espace client (et d'une prolongation), en jours.
+    duree-lien-jours: ${FARO_CLIENT_DUREE_LIEN_JOURS:90}
+  public:
+    # Limite par adresse IP des requêtes sur l'espace client public (/api/public/**), en mémoire. Voir
+    # LimiteRequetesPubliques et docs/deploiement.md.
+    limite:
+      active: ${FARO_LIMITE_PUBLIC_ACTIVE:true}
+      requetes-par-minute: ${FARO_LIMITE_PUBLIC_PAR_MINUTE:60}
+      # Nombre de proxys faro devant le backend dont on lit X-Forwarded-For (0 : adresse de la connexion seule).
+      # Caddy + nginx (production, réseau local) : 2 ; nginx seul (Docker « complet ») : 1.
+      proxys-de-confiance: ${FARO_PROXYS_DE_CONFIANCE:0}
 
 management:
   endpoints:

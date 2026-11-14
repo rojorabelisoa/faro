@@ -1,10 +1,13 @@
 package com.faro.client;
 
 import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +39,12 @@ public class EspaceClientService {
     private final DevisPdfService devisPdf;
     private final AvenantService avenantService;
     private final LotService lotService;
+    private final Duration dureeLien;
 
     public EspaceClientService(AccesClientRepository acces, AffaireService affaireService, DevisService devisService,
-            DevisPdfService devisPdf, AvenantService avenantService, LotService lotService) {
+            DevisPdfService devisPdf, AvenantService avenantService, LotService lotService,
+            @Value("${faro.client.duree-lien-jours:90}") int dureeLienJours) {
+        this.dureeLien = Duration.ofDays(dureeLienJours);
         this.acces = acces;
         this.affaireService = affaireService;
         this.devisService = devisService;
@@ -59,7 +65,17 @@ public class EspaceClientService {
         byte[] octets = new byte[32];
         ALEA.nextBytes(octets);
         return acces.save(new AccesClient(affaireService.get(organisation, affaireId),
-            Base64.getUrlEncoder().withoutPadding().encodeToString(octets)));
+            Base64.getUrlEncoder().withoutPadding().encodeToString(octets), Instant.now().plus(dureeLien)));
+    }
+
+    /** Repart pour la durée complète (90 jours par défaut) à partir de maintenant, même si le lien a expiré. */
+    public AccesClient prolonger(Organisation organisation, UUID affaireId, UUID id) {
+        Affaire affaire = affaireService.get(organisation, affaireId);
+        AccesClient lien = acces.findByIdAndAffaireId(id, affaire.getId())
+            .filter(l -> l.getRevoqueAt() == null)
+            .orElseThrow(() -> new NotFoundException("Lien introuvable"));
+        lien.prolongerJusqua(Instant.now().plus(dureeLien));
+        return lien;
     }
 
     public void revoquer(Organisation organisation, UUID affaireId, UUID id) {
@@ -75,10 +91,11 @@ public class EspaceClientService {
         lien.visite();
         Affaire affaire = lien.getAffaire();
         Organisation organisation = affaire.getOrganisation();
+        // Le déboursé sec (coût interne de l'entreprise) n'est jamais montré au client.
         List<AvenantResponse> avenants = avenantService.list(organisation, affaire.getId()).stream()
-            .filter(a -> a.statut() != StatutAvenant.BROUILLON).toList();
+            .filter(a -> a.statut() != StatutAvenant.BROUILLON).map(AvenantResponse::sansDebourse).toList();
         return new EspaceClientResponse(organisation.getNom(), affaire.getNom(), affaire.getAdresse(), affaire.getStatut(),
-            affaire.getVersionChantierId() != null, devisService.devis(organisation, affaire.getId()),
+            affaire.getVersionChantierId() != null, devisService.devis(organisation, affaire.getId()).sansDebourse(),
             lotService.list(organisation).stream()
                 .map(l -> new EspaceClientResponse.Lot(l.getId(), l.getCode(), l.getNom())).toList(),
             avenants, avenantService.marche(organisation, affaire.getId()));
@@ -111,8 +128,10 @@ public class EspaceClientService {
         return avenantService.document(affaire.getOrganisation(), affaire.getId(), avenantId);
     }
 
+    /** Un lien expiré répond exactement comme un lien inconnu ou révoqué (404, même message). */
     private AccesClient lien(String code) {
         return acces.findByCodeAndRevoqueAtIsNull(code)
+            .filter(l -> !l.estExpire(Instant.now()))
             .orElseThrow(() -> new NotFoundException("Lien invalide ou révoqué"));
     }
 }
