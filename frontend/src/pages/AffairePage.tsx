@@ -4,6 +4,7 @@ import type {
   Affaire, Devis, Gamme, Ligne, LigneInput, Lot, NiveauTravaux, Ouvrage, Piece, PieceInput, StatutAffaire, TypePiece,
 } from '../api'
 import { useSession } from '../ApiContext'
+import { useDroits } from '../droits'
 import FormulaireAffaire from '../components/FormulaireAffaire'
 import { nomFichier, telecharger } from '../components/telecharger'
 import AccesClient from '../components/AccesClient'
@@ -25,6 +26,8 @@ const GENERAL = ''
 export default function AffairePage() {
   const { id = '' } = useParams()
   const { api } = useSession()
+  // Conducteur de travaux : lecture du devis, visite, avenants et dépenses ; ni modification ni marge.
+  const { gestion, montantsInternes } = useDroits()
   const [affaire, setAffaire] = useState<Affaire | null>(null)
   const [pieces, setPieces] = useState<Piece[]>([])
   const [lots, setLots] = useState<Lot[]>([])
@@ -94,6 +97,7 @@ export default function AffairePage() {
             {[affaire.clientNom, affaire.adresse, LIBELLES_TYPE_BIEN[affaire.typeBien]].filter(Boolean).join(' · ')}
           </p>
         </div>
+        {gestion ? (
         <div className="en-ligne">
         <button onClick={() => setModification(true)}>Modifier</button>
         <button className="danger" onClick={() => void supprimer()}>Supprimer</button>
@@ -106,6 +110,7 @@ export default function AffairePage() {
           </select>
         </label>
         </div>
+        ) : <span className={`statut statut-${affaire.statut}`}>{LIBELLES_STATUT[affaire.statut]}</span>}
       </div>
 
       {modification && (
@@ -125,6 +130,7 @@ export default function AffairePage() {
       {info && <p role="status" className="info" onClick={() => setInfo(null)}>{info}</p>}
 
       <Pieces
+        lectureSeule={!gestion}
         pieces={pieces}
         onAdd={(input) => run(async () => {
           await api.createPiece(affaire.id, input)
@@ -142,7 +148,7 @@ export default function AffairePage() {
 
       <Visite affaire={affaire} pieces={pieces} />
 
-      <Estimation affaireId={affaire.id} version={devis} />
+      {montantsInternes && <Estimation affaireId={affaire.id} version={devis} />}
 
       <section className="carte">
         <div className="titre-section">
@@ -166,6 +172,7 @@ export default function AffairePage() {
         )}
         <TableDevis
           fige={!!affaire.versionChantierId}
+          lectureSeule={!gestion}
           devis={devis}
           pieces={pieces}
           lots={lots}
@@ -198,7 +205,7 @@ export default function AffairePage() {
           })}
         />
 
-        {!affaire.versionChantierId && <FormulaireLigne
+        {gestion && !affaire.versionChantierId && <FormulaireLigne
           key={edition?.id ?? 'nouvelle'}
           ligne={edition}
           pieces={pieces}
@@ -226,14 +233,15 @@ export default function AffairePage() {
 
       <MargeChantier affaireId={affaire.id} lots={lots} version={devis} />
 
-      <AccesClient affaireId={affaire.id} />
+      {gestion && <AccesClient affaireId={affaire.id} />}
 
-      <BilanOperation affaireId={affaire.id} version={devis} />
+      {montantsInternes && <BilanOperation affaireId={affaire.id} version={devis} />}
     </>
   )
 }
 
-function Pieces({ pieces, onAdd, onUpdate, onDelete }: {
+function Pieces({ lectureSeule, pieces, onAdd, onUpdate, onDelete }: {
+  lectureSeule: boolean
   pieces: Piece[]
   onAdd: (input: PieceInput) => Promise<boolean>
   onUpdate: (piece: Piece, input: PieceInput) => Promise<boolean>
@@ -247,19 +255,17 @@ function Pieces({ pieces, onAdd, onUpdate, onDelete }: {
       <ul className="pastilles">
         {pieces.map((piece) => (
           <li key={piece.id} className={edition?.id === piece.id ? 'active' : undefined}>
+            {lectureSeule ? <span>{descriptionPiece(piece)}</span> : <>
             <button className="lien" onClick={() => setEdition(piece)} aria-label={`Modifier ${piece.nom}`}>
-              {piece.nom}
-              {piece.surfaceM2 != null && <span className="discret"> · {formatNombre(piece.surfaceM2)} m²</span>}
-              {piece.surfaceMursM2 != null && (
-                <span className="discret"> · murs {formatNombre(piece.surfaceMursM2)} m²</span>
-              )}
+              {descriptionPiece(piece)}
             </button>
             <button className="icone" aria-label={`Supprimer ${piece.nom}`} onClick={() => void onDelete(piece)}>×</button>
+            </>}
           </li>
         ))}
         {pieces.length === 0 && <li className="discret">Ajoutez les pièces relevées pendant la visite.</li>}
       </ul>
-      {edition ? (
+      {lectureSeule ? null : edition ? (
         <FormulairePiece
           key={edition.id}
           piece={edition}
@@ -275,6 +281,16 @@ function Pieces({ pieces, onAdd, onUpdate, onDelete }: {
       )}
     </section>
   )
+}
+
+function descriptionPiece(piece: Piece) {
+  return <>
+    {piece.nom}
+    {piece.surfaceM2 != null && <span className="discret"> · {formatNombre(piece.surfaceM2)} m²</span>}
+    {piece.surfaceMursM2 != null && (
+      <span className="discret"> · murs {formatNombre(piece.surfaceMursM2)} m²</span>
+    )}
+  </>
 }
 
 const enTexte = (valeur: number | null | undefined) => (valeur != null ? String(valeur).replace('.', ',') : '')
@@ -415,9 +431,11 @@ export function deplacer(lignes: Ligne[], groupe: Ligne[], ligne: Ligne, sens: -
   return ids
 }
 
-function TableDevis({ fige, devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, onBonCommande, onDelete,
-  onSaveToLibrary }: {
+function TableDevis({ fige, lectureSeule, devis, pieces, lots, vue, onEdit, onMove, onChoisirGamme, onBonCommande,
+  onDelete, onSaveToLibrary }: {
   fige: boolean
+  /** Conducteur de travaux : ni gamme, ni modification, ni ajout à la bibliothèque. */
+  lectureSeule: boolean
   onBonCommande: (lotId: string) => void
   devis: Devis
   pieces: Piece[]
@@ -464,7 +482,7 @@ function TableDevis({ fige, devis, pieces, lots, vue, onEdit, onMove, onChoisirG
               {groupe.gammes && (
                 <span className="gammes" role="group" aria-label={`Gamme ${groupe.titre}`}>
                   {(Object.keys(LIBELLES_GAMME) as Gamme[]).map((gamme) => (
-                    <button key={gamme} aria-pressed={groupe.gammeChoisie === gamme} disabled={fige}
+                    <button key={gamme} aria-pressed={groupe.gammeChoisie === gamme} disabled={fige || lectureSeule}
                       onClick={() => void onChoisirGamme(groupe.pieceId ?? null, gamme)}>
                       {LIBELLES_GAMME[gamme]} {formatEuros(groupe.gammes![gamme])}
                     </button>
@@ -489,7 +507,7 @@ function TableDevis({ fige, devis, pieces, lots, vue, onEdit, onMove, onChoisirG
               <td className="nombre">{formatTaux(ligne.tauxTva)}</td>
               <td className="nombre">{formatEuros(ligne.montantHt)}</td>
               <td className="actions-ligne">
-                {fige ? (!ligne.ouvrageId && (
+                {lectureSeule ? null : fige ? (!ligne.ouvrageId && (
                   <button onClick={() => void onSaveToLibrary(ligne)} title="Réutiliser cet ouvrage dans d'autres devis">
                     → Bibliothèque
                   </button>

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import type { TableauDeBord } from '../../api'
+import type { TableauDeBordComplet } from '../../api'
 import { formatEuros, LIBELLES_STATUT } from '../../format'
 
 /**
  * Montant par étape (ordonnée) : anneau en rampe séquentielle d'une seule teinte, segments séparés,
  * total au centre ; légende avec valeurs (l'identité ne repose jamais sur la seule couleur).
  */
-export default function Pipeline({ pipeline }: { pipeline: TableauDeBord['pipeline'] }) {
+export default function Pipeline({ pipeline }: { pipeline: TableauDeBordComplet['pipeline'] }) {
   const [survol, setSurvol] = useState<number | null>(null)
   const total = pipeline.reduce((s, e) => s + e.montantHt, 0)
   const taille = 168

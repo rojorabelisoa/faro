@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.faro.droits.AccesConducteur;
 import com.faro.equipe.EquipeDtos.EntrepriseResponse;
 import com.faro.equipe.EquipeDtos.InvitationInfo;
 import com.faro.equipe.EquipeDtos.InvitationRequest;
@@ -25,6 +26,8 @@ import com.faro.equipe.EquipeDtos.RenommerRequest;
 import com.faro.equipe.EquipeDtos.RoleRequest;
 import com.faro.user.AppUserService;
 
+/** Tous les membres y accèdent ; l'administration est réservée au gérant par EquipeService. */
+@AccesConducteur
 @RestController
 public class EquipeController {
 

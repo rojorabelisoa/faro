@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.faro.droits.AccesConducteur;
 import com.faro.organisation.CurrentOrganisation;
 import com.faro.organisation.Organisation;
 import com.faro.visite.PhotoRepository.PhotoInfo;
@@ -41,16 +42,19 @@ public class VisiteController {
         this.pdfService = pdfService;
     }
 
+    @AccesConducteur
     @GetMapping("/visite")
     public VisiteResponse visite(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId) {
         return visiteService.visite(organisation, affaireId);
     }
 
+    @AccesConducteur
     @GetMapping(value = "/visite.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public byte[] pdf(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId) {
         return pdfService.pdf(organisation, affaireId);
     }
 
+    @AccesConducteur
     @PostMapping("/observations")
     @ResponseStatus(HttpStatus.CREATED)
     public ObservationResponse addObservation(@CurrentOrganisation Organisation organisation,
@@ -72,6 +76,7 @@ public class VisiteController {
         visiteService.deleteObservation(organisation, affaireId, id);
     }
 
+    @AccesConducteur
     @PostMapping(value = "/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public PhotoInfo addPhoto(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
@@ -83,6 +88,7 @@ public class VisiteController {
             photo.getCreatedAt());
     }
 
+    @AccesConducteur
     @GetMapping("/photos/{id}")
     public ResponseEntity<byte[]> photo(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
             @PathVariable UUID id) {

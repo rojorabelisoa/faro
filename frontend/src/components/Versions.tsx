@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import type { Affaire, Version } from '../api'
 import { useSession } from '../ApiContext'
+import { useDroits } from '../droits'
 import { formatEuros } from '../format'
 import { nomFichier, telecharger } from './telecharger'
 
@@ -12,6 +13,7 @@ const dateHeure = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeSty
  */
 export default function Versions({ affaire, onChantier }: { affaire: Affaire; onChantier: () => Promise<unknown> }) {
   const { api } = useSession()
+  const { gestion } = useDroits()
   const [versions, setVersions] = useState<Version[] | null>(null)
   const [libelle, setLibelle] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -51,7 +53,7 @@ export default function Versions({ affaire, onChantier }: { affaire: Affaire; on
     <section className="carte" aria-label="Versions et chantier">
       <div className="titre-section">
         <h2>Versions et chantier</h2>
-        {!affaire.versionChantierId && (
+        {gestion && !affaire.versionChantierId && (
           <button className="primaire" onClick={chantier}>Passer en chantier</button>
         )}
       </div>
@@ -91,11 +93,11 @@ export default function Versions({ affaire, onChantier }: { affaire: Affaire; on
       ) : (
         <p className="vide">Figez une version avant de l'envoyer au client : vous garderez une trace exacte de ce qui a été proposé.</p>
       )}
-      <form className="en-ligne" onSubmit={figer} aria-label="Figer une version">
+      {gestion && <form className="en-ligne" onSubmit={figer} aria-label="Figer une version">
         <input value={libelle} onChange={(e) => setLibelle(e.target.value)} aria-label="Libellé de la version"
           placeholder="Devis envoyé au client…" />
         <button type="submit">Figer une version</button>
-      </form>
+      </form>}
     </section>
   )
 }

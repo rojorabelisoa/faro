@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import type { Lot, Marge, NatureDepense } from '../api'
+import type { Depense, Lot, Marge, NatureDepense } from '../api'
 import { useSession } from '../ApiContext'
+import { useDroits } from '../droits'
 import { formatEuros, parseNombre } from '../format'
 
 const NATURES: Record<NatureDepense, string> = {
@@ -12,10 +13,15 @@ const NATURES: Record<NatureDepense, string> = {
 }
 const pourcent = (taux: number | null) => (taux == null ? '—' : `${String(taux).replace('.', ',')} %`)
 
-/** Marge prévue (déboursé sec) contre marge réelle (dépenses saisies), lot par lot. */
+/**
+ * Marge prévue (déboursé sec) contre marge réelle (dépenses saisies), lot par lot.
+ * Le conducteur de travaux ne voit que les dépenses, qu'il saisit, sans la marge.
+ */
 export default function MargeChantier({ affaireId, lots, version }: { affaireId: string; lots: Lot[]; version: unknown }) {
   const { api } = useSession()
+  const { montantsInternes } = useDroits()
   const [marge, setMarge] = useState<Marge | null>(null)
+  const [seulesDepenses, setSeulesDepenses] = useState<Depense[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lotId, setLotId] = useState('')
   const [nature, setNature] = useState<NatureDepense>('MATERIAUX')
@@ -27,14 +33,18 @@ export default function MargeChantier({ affaireId, lots, version }: { affaireId:
   const run = useCallback(async (action: () => Promise<unknown>) => {
     try {
       await action()
-      setMarge(await api.marge(affaireId))
+      if (montantsInternes) {
+        setMarge(await api.marge(affaireId))
+      } else {
+        setSeulesDepenses(await api.depenses(affaireId))
+      }
       setError(null)
       return true
     } catch (e) {
       setError((e as Error).message)
       return false
     }
-  }, [api, affaireId])
+  }, [api, affaireId, montantsInternes])
 
   useEffect(() => {
     void run(async () => undefined)
@@ -61,10 +71,11 @@ export default function MargeChantier({ affaireId, lots, version }: { affaireId:
     return lot ? `${lot.code} · ${lot.nom}` : ''
   }
   const classeMarge = (valeur: number) => (valeur < 0 ? 'negatif' : undefined)
+  const depenses = montantsInternes ? marge?.depenses : seulesDepenses
 
   return (
-    <section className="carte" aria-label="Marge">
-      <h2>Marge</h2>
+    <section className="carte" aria-label={montantsInternes ? 'Marge' : 'Dépenses'}>
+      <h2>{montantsInternes ? 'Marge' : 'Dépenses du chantier'}</h2>
       {error && <p role="alert" className="erreur">{error}</p>}
       {marge && marge.lots.length > 0 && (
         <>
@@ -117,11 +128,11 @@ export default function MargeChantier({ affaireId, lots, version }: { affaireId:
         </>
       )}
 
-      <h3>Dépenses réelles</h3>
-      {marge && marge.depenses.length > 0 ? (
+      {montantsInternes && <h3>Dépenses réelles</h3>}
+      {depenses && depenses.length > 0 ? (
         <table className="tableau">
           <tbody>
-            {marge.depenses.map((d) => (
+            {depenses.map((d) => (
               <tr key={d.id}>
                 <td className="discret">{new Date(d.dateDepense).toLocaleDateString('fr-FR')}</td>
                 <td>{d.libelle}{d.fournisseur && <span className="discret"> · {d.fournisseur}</span>}</td>

@@ -100,6 +100,12 @@ public class MargeService {
             : marge.multiply(BigDecimal.valueOf(100)).divide(vendu, 1, RoundingMode.HALF_UP);
     }
 
+    @Transactional(readOnly = true)
+    public List<Depense> depenses(Organisation organisation, UUID affaireId) {
+        Affaire affaire = affaireService.get(organisation, affaireId);
+        return depenses.findByAffaireIdOrderByDateDepenseAscCreatedAtAsc(affaire.getId());
+    }
+
     public Depense addDepense(Organisation organisation, UUID affaireId, DepenseRequest request) {
         Depense depense = new Depense(affaireService.get(organisation, affaireId));
         apply(organisation, depense, request);

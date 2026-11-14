@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import type { Affaire, PhotoInfo, Piece, Visite as VisiteData } from '../api'
 import { useSession } from '../ApiContext'
+import { useDroits } from '../droits'
 import { reduireImage } from './reduireImage'
 import { nomFichier, telecharger } from './telecharger'
 
@@ -9,6 +10,7 @@ const GENERAL = ''
 /** Compte-rendu de visite : notes et photos par pièce, prises sur place (téléphone). */
 export default function Visite({ affaire, pieces }: { affaire: Affaire; pieces: Piece[] }) {
   const { api } = useSession()
+  const { gestion } = useDroits()
   const [visite, setVisite] = useState<VisiteData | null>(null)
   const [pieceId, setPieceId] = useState(GENERAL)
   const [texte, setTexte] = useState('')
@@ -78,8 +80,8 @@ export default function Visite({ affaire, pieces }: { affaire: Affaire; pieces: 
               {notes.map((note) => (
                 <li key={note.id}>
                   {note.texte}
-                  <button className="icone" aria-label="Supprimer la note"
-                    onClick={() => void run(() => api.deleteObservation(affaire.id, note.id))}>×</button>
+                  {gestion && <button className="icone" aria-label="Supprimer la note"
+                    onClick={() => void run(() => api.deleteObservation(affaire.id, note.id))}>×</button>}
                 </li>
               ))}
             </ul>
@@ -87,7 +89,7 @@ export default function Visite({ affaire, pieces }: { affaire: Affaire; pieces: 
               <div className="photos">
                 {photos.map((photo) => (
                   <Vignette key={photo.id} affaireId={affaire.id} photo={photo}
-                    onDelete={() => void run(() => api.deletePhoto(affaire.id, photo.id))} />
+                    onDelete={gestion ? () => void run(() => api.deletePhoto(affaire.id, photo.id)) : undefined} />
                 ))}
               </div>
             )}
@@ -131,7 +133,8 @@ export default function Visite({ affaire, pieces }: { affaire: Affaire; pieces: 
 }
 
 /** Les photos demandent le jeton : on les charge en Blob pour les afficher. */
-function Vignette({ affaireId, photo, onDelete }: { affaireId: string; photo: PhotoInfo; onDelete: () => void }) {
+/** Sans onDelete (conducteur de travaux), pas de bouton de suppression. */
+function Vignette({ affaireId, photo, onDelete }: { affaireId: string; photo: PhotoInfo; onDelete?: () => void }) {
   const { api } = useSession()
   const [url, setUrl] = useState<string | null>(null)
 
@@ -155,7 +158,7 @@ function Vignette({ affaireId, photo, onDelete }: { affaireId: string; photo: Ph
       ) : <div className="vignette-vide" />}
       <figcaption>
         {photo.legende}
-        <button className="icone" aria-label="Supprimer la photo" onClick={onDelete}>×</button>
+        {onDelete && <button className="icone" aria-label="Supprimer la photo" onClick={onDelete}>×</button>}
       </figcaption>
     </figure>
   )

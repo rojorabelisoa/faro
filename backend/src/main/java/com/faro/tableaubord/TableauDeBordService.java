@@ -163,7 +163,7 @@ public class TableauDeBordService {
                 avenantsEnAttente + " avenant(s) envoyé(s)"),
             new Transformation(gagnees + perdues == 0 ? null
                 : pourcent(BigDecimal.valueOf(gagnees), BigDecimal.valueOf(gagnees + perdues)), gagnees, perdues, enCours),
-            signeParMois, pipeline, aFaire.stream().limit(6).toList());
+            signeParMois, pipeline, aFaire.stream().limit(6).toList(), true);
     }
 
     private void cumuler(Map<YearMonth, BigDecimal> cumul, String sql, Object... parametres) {

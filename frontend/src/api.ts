@@ -397,16 +397,30 @@ export interface Indicateur {
   detail: string
 }
 
+/**
+ * montants = false : version réduite du conducteur de travaux (indicateurs financiers null, signé par mois vide,
+ * montants par étape null).
+ */
 export interface TableauDeBord {
+  montants: boolean
   affairesActives: Indicateur
+  signeCeMois: Indicateur | null
+  margeReelle: Indicateur | null
+  enAttenteClient: Indicateur | null
+  transformation: { taux: number | null; gagnees: number; perdues: number; enCours: number } | null
+  signeParMois: { mois: string; montantHt: number }[]
+  pipeline: { statut: StatutAffaire; nombre: number; montantHt: number | null }[]
+  aFaire: { type: 'AVENANT_EN_ATTENTE' | 'A_RELANCER' | 'CLIENT_A_CONSULTE'; libelle: string; affaireId: string;
+    affaire: string; date: string | null }[]
+}
+
+/** Version complète (montants = true) : tous les indicateurs financiers sont renseignés. */
+export interface TableauDeBordComplet extends TableauDeBord {
   signeCeMois: Indicateur
   margeReelle: Indicateur
   enAttenteClient: Indicateur
   transformation: { taux: number | null; gagnees: number; perdues: number; enCours: number }
-  signeParMois: { mois: string; montantHt: number }[]
   pipeline: { statut: StatutAffaire; nombre: number; montantHt: number }[]
-  aFaire: { type: 'AVENANT_EN_ATTENTE' | 'A_RELANCER' | 'CLIENT_A_CONSULTE'; libelle: string; affaireId: string;
-    affaire: string; date: string | null }[]
 }
 
 export interface ImportResultat {
@@ -596,6 +610,7 @@ export function createApi(token: string) {
       download(token, `/api/affaires/${affaireId}/avenants/${id}/document.pdf`),
 
     marge: (affaireId: string) => request<Marge>(token, `/api/affaires/${affaireId}/marge`),
+    depenses: (affaireId: string) => request<Depense[]>(token, `/api/affaires/${affaireId}/depenses`),
     addDepense: (affaireId: string, input: DepenseInput) =>
       request<Depense>(token, `/api/affaires/${affaireId}/depenses`, json('POST', input)),
     deleteDepense: (affaireId: string, id: string) =>

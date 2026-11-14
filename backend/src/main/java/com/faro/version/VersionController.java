@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.faro.droits.AccesConducteur;
+import com.faro.droits.Droits;
 import com.faro.devis.DevisPdfService;
 import com.faro.devis.DevisResponse;
 import com.faro.organisation.CurrentOrganisation;
@@ -28,11 +30,14 @@ import com.faro.organisation.Organisation;
 public class VersionController {
 
     private final VersionService versionService;
+    private final Droits droits;
 
-    public VersionController(VersionService versionService) {
+    public VersionController(VersionService versionService, Droits droits) {
+        this.droits = droits;
         this.versionService = versionService;
     }
 
+    @AccesConducteur
     @GetMapping("/versions")
     public List<VersionResponse> list(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId) {
         return versionService.list(organisation, affaireId);
@@ -57,12 +62,15 @@ public class VersionController {
         return VersionResponse.from(version, version.getId());
     }
 
+    @AccesConducteur
     @GetMapping("/versions/{id}/devis")
     public DevisResponse devis(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
             @PathVariable UUID id) {
-        return versionService.devis(organisation, affaireId, id);
+        DevisResponse devis = versionService.devis(organisation, affaireId, id);
+        return droits.voitLesMontantsInternes() ? devis : devis.sansDebourse();
     }
 
+    @AccesConducteur
     @GetMapping(value = "/versions/{id}/devis.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public byte[] pdf(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
             @PathVariable UUID id, @RequestParam(defaultValue = "PIECE") DevisPdfService.Vue vue) {

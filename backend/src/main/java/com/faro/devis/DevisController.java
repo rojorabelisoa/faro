@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.faro.devis.DevisResponse.LigneResponse;
+import com.faro.droits.AccesConducteur;
+import com.faro.droits.Droits;
 import com.faro.organisation.CurrentOrganisation;
 import com.faro.organisation.Organisation;
 
@@ -31,13 +33,17 @@ public class DevisController {
     private final DevisService devisService;
     private final DevisPdfService pdfService;
     private final DevisCsvService csvService;
+    private final Droits droits;
 
-    public DevisController(DevisService devisService, DevisPdfService pdfService, DevisCsvService csvService) {
+    public DevisController(DevisService devisService, DevisPdfService pdfService, DevisCsvService csvService,
+            Droits droits) {
+        this.droits = droits;
         this.devisService = devisService;
         this.pdfService = pdfService;
         this.csvService = csvService;
     }
 
+    @AccesConducteur
     @GetMapping(value = "/devis.csv", produces = "text/csv")
     public ResponseEntity<byte[]> csv(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId) {
         return ResponseEntity.ok()
@@ -46,11 +52,14 @@ public class DevisController {
             .body(csvService.csv(organisation, affaireId));
     }
 
+    @AccesConducteur
     @GetMapping("/devis")
     public DevisResponse devis(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId) {
-        return devisService.devis(organisation, affaireId);
+        DevisResponse devis = devisService.devis(organisation, affaireId);
+        return droits.voitLesMontantsInternes() ? devis : devis.sansDebourse();
     }
 
+    @AccesConducteur
     @GetMapping(value = "/devis.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> pdf(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
             @RequestParam(defaultValue = "PIECE") DevisPdfService.Vue vue) {
@@ -96,12 +105,16 @@ public class DevisController {
         devisService.reorder(organisation, affaireId, request.ids());
     }
 
+    /** Ouvert au conducteur de travaux pour les seules lignes d'avenant (vérifié par DevisService). */
+    @AccesConducteur
     @PutMapping("/lignes/{id}")
     public LigneResponse update(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
             @PathVariable UUID id, @Valid @RequestBody LigneDevisRequest request) {
-        return LigneResponse.from(devisService.update(organisation, affaireId, id, request));
+        LigneResponse ligne = LigneResponse.from(devisService.update(organisation, affaireId, id, request));
+        return droits.voitLesMontantsInternes() ? ligne : ligne.sansDebourse();
     }
 
+    @AccesConducteur
     @DeleteMapping("/lignes/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,

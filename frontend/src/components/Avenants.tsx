@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import type { Affaire, Avenant, Lot, Marche, Piece } from '../api'
 import { useSession } from '../ApiContext'
+import { useDroits } from '../droits'
 import { formatEuros, formatNombre, formatTaux, parseNombre, TAUX_TVA, UNITES } from '../format'
 import { nomFichier, telecharger } from './telecharger'
 
@@ -95,6 +96,8 @@ function CarteAvenant({ affaire, avenant, pieces, lots, run }: {
   run: (action: () => Promise<unknown>) => Promise<boolean>
 }) {
   const { api } = useSession()
+  // Le conducteur de travaux prépare l'avenant ; l'envoi au client et la décision restent au bureau.
+  const { gestion } = useDroits()
   const [par, setPar] = useState(affaire.clientNom ?? '')
   const [commentaire, setCommentaire] = useState('')
   const nomPiece = (id: string | null) => pieces.find((p) => p.id === id)?.nom ?? 'Général'
@@ -139,7 +142,7 @@ function CarteAvenant({ affaire, avenant, pieces, lots, run }: {
         <>
           <LigneAvenant pieces={pieces} lots={lots}
             onSubmit={(input) => run(() => api.addLigneAvenant(affaire.id, avenant.id, input))} />
-          <div className="actions">
+          {gestion && <div className="actions">
             <button className="danger" onClick={() => void run(() => api.deleteAvenant(affaire.id, avenant.id))}>
               Supprimer l'avenant
             </button>
@@ -147,7 +150,7 @@ function CarteAvenant({ affaire, avenant, pieces, lots, run }: {
               onClick={() => void run(() => api.envoyerAvenant(affaire.id, avenant.id))}>
               Envoyer au client (fige le contenu)
             </button>
-          </div>
+          </div>}
         </>
       )}
 
@@ -159,7 +162,7 @@ function CarteAvenant({ affaire, avenant, pieces, lots, run }: {
         </div>
       )}
 
-      {avenant.statut === 'ENVOYE' && (
+      {gestion && avenant.statut === 'ENVOYE' && (
         <form className="en-ligne decision" aria-label={`Décision avenant ${avenant.numero}`}
           onSubmit={(e) => e.preventDefault()}>
           <input value={par} onChange={(e) => setPar(e.target.value)} placeholder="Nom du client" required

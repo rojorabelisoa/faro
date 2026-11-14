@@ -8,6 +8,7 @@ import {
   IconeSortie,
 } from './components/Icones'
 import { SessionContext, useSession } from './ApiContext'
+import { droits } from './droits'
 import AffairesPage from './pages/AffairesPage'
 import TableauDeBordPage from './pages/TableauDeBordPage'
 import AffairePage from './pages/AffairePage'
@@ -122,11 +123,11 @@ function BandeauEssai() {
 const NAVIGATION = [
   { to: '/', libelle: 'Tableau de bord', icone: <IconeAccueil />, fin: true },
   { to: '/affaires', libelle: 'Affaires', icone: <IconeAffaires /> },
-  { to: '/bibliotheque', libelle: 'Bibliothèque', icone: <IconeBibliotheque /> },
+  { to: '/bibliotheque', libelle: 'Bibliothèque', icone: <IconeBibliotheque />, gestion: true },
 ]
 const REGLAGES = [
-  { to: '/lots', libelle: 'Lots', icone: <IconeLots /> },
-  { to: '/ratios', libelle: 'Ratios', icone: <IconeRatios /> },
+  { to: '/lots', libelle: 'Lots', icone: <IconeLots />, gestion: true },
+  { to: '/ratios', libelle: 'Ratios', icone: <IconeRatios />, gestion: true },
   { to: '/entreprise', libelle: 'Entreprise', icone: <IconeEntreprise /> },
 ]
 
@@ -139,6 +140,8 @@ function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: (
   const location = useLocation()
   useEffect(() => setMenuOuvert(false), [location.pathname])
   const nom = me.displayName ?? me.email ?? me.subject
+  // Entrées de réglage masquées au conducteur de travaux (le serveur les lui refuse de toute façon).
+  const autorise = (item: { gestion?: boolean }) => !item.gestion || droits(me).gestion
   const lien = (item: { to: string; libelle: string; icone: React.ReactNode; fin?: boolean }) => (
     <NavLink key={item.to} to={item.to} end={item.fin}>{item.icone}{item.libelle}</NavLink>
   )
@@ -152,9 +155,9 @@ function Layout({ children, onLogout }: { children: React.ReactNode; onLogout: (
         </div>
         <nav aria-label="Principale">
           <div className="section-nav">Pilotage</div>
-          {NAVIGATION.map(lien)}
+          {NAVIGATION.filter(autorise).map(lien)}
           <div className="section-nav">Réglages</div>
-          {REGLAGES.map(lien)}
+          {REGLAGES.filter(autorise).map(lien)}
           {me.roles.includes('admin') && lien({ to: '/admin', libelle: 'Admin SaaS', icone: <IconeAdmin /> })}
         </nav>
         <div className="profil">

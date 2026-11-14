@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.faro.droits.AccesConducteur;
 import com.faro.organisation.CurrentOrganisation;
 import com.faro.organisation.Organisation;
 
@@ -20,6 +21,7 @@ public class BonCommandeController {
         this.service = service;
     }
 
+    @AccesConducteur
     @GetMapping(value = "/api/affaires/{affaireId}/lots/{lotId}/bon-commande.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public byte[] pdf(@CurrentOrganisation Organisation organisation, @PathVariable UUID affaireId,
             @PathVariable UUID lotId, @RequestParam(required = false) String fournisseur) {

@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import type { Api, Devis, Gamme, Piece } from '../api'
+import type { Api, Devis, Gamme, Piece, RoleEntreprise } from '../api'
 import { SessionContext } from '../ApiContext'
 import AffairePage, { deplacer, metres } from './AffairePage'
 
@@ -44,7 +44,7 @@ const DEVIS: Devis = {
   totauxParGamme: null,
 }
 
-function renderPage(devis: Devis = DEVIS) {
+function renderPage(devis: Devis = DEVIS, roleEntreprise: RoleEntreprise = 'GERANT') {
   const api = {
     affaire: vi.fn().mockResolvedValue({ id: 'a1', nom: 'T3 Lyon', clientNom: 'M. Martin', adresse: null,
       typeBien: 'APPARTEMENT', statut: 'ESTIMATION' }),
@@ -55,6 +55,8 @@ function renderPage(devis: Devis = DEVIS) {
     versions: vi.fn().mockResolvedValue([]),
     liensClient: vi.fn().mockResolvedValue([]),
     bilan: vi.fn().mockResolvedValue({ hypotheses: null, travauxTtc: 0, scenarios: [] }),
+    depenses: vi.fn().mockResolvedValue([{ id: 'd1', lotId: 'l07', nature: 'MATERIAUX', libelle: 'Facture Cedeo',
+      fournisseur: null, montantHt: 120, dateDepense: '2026-11-10' }]),
     marge: vi.fn().mockResolvedValue({ lots: [], total: { venduHt: 0, coutPrevuHt: 0, coutReelHt: 0, margePrevueHt: 0, margeReelleHt: 0, tauxMargePrevue: null, tauxMargeReelle: null, lignesSansDebourse: 0 }, depenses: [] }),
     ouvrages: vi.fn().mockResolvedValue([]),
     createLigne: vi.fn().mockResolvedValue({}),
@@ -69,7 +71,7 @@ function renderPage(devis: Devis = DEVIS) {
       totalMinHt: 8400, totalMaxHt: 15600, devisHt: 1630.2,
     }),
   }
-  const me = { id: '1', subject: 's', email: null, displayName: 'Demo', roles: [], organisation: { id: 'o', nom: 'X' }, roleEntreprise: 'GERANT' as const }
+  const me = { id: '1', subject: 's', email: null, displayName: 'Demo', roles: [], organisation: { id: 'o', nom: 'X' }, roleEntreprise }
   render(
     <SessionContext.Provider value={{ api: api as unknown as Api, me }}>
       <MemoryRouter initialEntries={['/affaires/a1']}>
@@ -121,6 +123,33 @@ describe('AffairePage', () => {
       pieceId: 'sdb', lotId: 'l10', designation: 'Carrelage mural', description: null, unite: 'm²', quantite: 4.25,
       prixUnitaireHt: 72.4, tauxTva: 10, gamme: null, debourseUnitaireHt: null,
     })
+  })
+})
+
+describe('AffairePage – conducteur de travaux', () => {
+  it('lit le devis et saisit les dépenses, sans modification, marge, estimation, bilan ni lien client', async () => {
+    const api = renderPage(DEVIS, 'CONDUCTEUR_TRAVAUX')
+
+    expect(await screen.findByRole('heading', { name: 'T3 Lyon' })).toBeInTheDocument()
+    expect(groupes()).toEqual(['Général350,00 €', 'Cuisine972,50 €', 'Salle de bains307,70 €'])
+    expect(screen.getByRole('button', { name: 'PDF chantier (par lot)' })).toBeInTheDocument()
+    expect(await screen.findByText('Facture Cedeo')).toBeInTheDocument()
+    expect(screen.getByRole('form', { name: 'Ajouter une dépense' })).toBeInTheDocument()
+    expect(screen.getByRole('form', { name: 'Ajouter une note de visite' })).toBeInTheDocument()
+
+    for (const nom of ['Modifier', 'Supprimer', 'Passer en chantier', 'Figer une version', 'Créer un lien client']) {
+      expect(screen.queryByRole('button', { name: nom })).not.toBeInTheDocument()
+    }
+    expect(screen.queryByRole('form', { name: 'Ajouter une ligne' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('form', { name: 'Ajouter une pièce' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Modifier Cuisine' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Marge' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Espace client' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Estimation rapide' })).not.toBeInTheDocument()
+    expect(api.marge).not.toHaveBeenCalled()
+    expect(api.bilan).not.toHaveBeenCalled()
+    expect(api.estimation).not.toHaveBeenCalled()
+    expect(api.liensClient).not.toHaveBeenCalled()
   })
 })
 

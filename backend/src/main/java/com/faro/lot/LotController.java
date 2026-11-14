@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.faro.droits.AccesConducteur;
 import com.faro.organisation.CurrentOrganisation;
 import com.faro.organisation.Organisation;
 
@@ -29,6 +30,7 @@ public class LotController {
         this.lotService = lotService;
     }
 
+    @AccesConducteur
     @GetMapping
     public List<LotResponse> list(@CurrentOrganisation Organisation organisation) {
         return lotService.list(organisation).stream().map(LotResponse::from).toList();

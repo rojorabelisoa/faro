@@ -29,6 +29,7 @@ import com.faro.devis.DevisResponse.LigneResponse;
 import com.faro.devis.DevisResponse.TotalLot;
 import com.faro.devis.DevisResponse.TotalPiece;
 import com.faro.devis.DevisResponse.TotalTva;
+import com.faro.droits.Droits;
 import com.faro.lot.Lot;
 import com.faro.lot.LotService;
 import com.faro.organisation.Organisation;
@@ -44,9 +45,11 @@ public class DevisService {
     private final PieceService pieceService;
     private final LotService lotService;
     private final OuvrageService ouvrageService;
+    private final Droits droits;
 
     public DevisService(LigneDevisRepository repository, AffaireService affaireService,
-            PieceService pieceService, LotService lotService, OuvrageService ouvrageService) {
+            PieceService pieceService, LotService lotService, OuvrageService ouvrageService, Droits droits) {
+        this.droits = droits;
         this.repository = repository;
         this.affaireService = affaireService;
         this.pieceService = pieceService;
@@ -150,6 +153,7 @@ public class DevisService {
 
     public LigneDevis update(Organisation organisation, UUID affaireId, UUID id, LigneDevisRequest request) {
         LigneDevis ligne = get(organisation, affaireId, id);
+        verifierDroits(ligne);
         verifierModifiable(ligne);
         apply(organisation, affaireId, ligne, request);
         if (request.ordre() != null) {
@@ -175,6 +179,7 @@ public class DevisService {
 
     public void delete(Organisation organisation, UUID affaireId, UUID id) {
         LigneDevis ligne = get(organisation, affaireId, id);
+        verifierDroits(ligne);
         verifierModifiable(ligne);
         repository.delete(ligne);
     }
@@ -195,6 +200,13 @@ public class DevisService {
         if (affaire.getVersionChantierId() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                 "L'affaire est en chantier : le devis est figé, passez par un avenant.");
+        }
+    }
+
+    /** Le conducteur de travaux ne touche qu'aux lignes d'avenant. */
+    private void verifierDroits(LigneDevis ligne) {
+        if (ligne.getAvenant() == null) {
+            droits.refuserConducteur();
         }
     }
 
@@ -228,7 +240,10 @@ public class DevisService {
     private void apply(Organisation organisation, UUID affaireId, LigneDevis ligne, LigneDevisRequest request) {
         ligne.setTauxTva(Montants.tauxTva(request.tauxTva()));
         ligne.setGamme(request.gamme());
-        ligne.setDebourseUnitaireHt(request.debourseUnitaireHt());
+        // Le conducteur de travaux ne voit pas le déboursé sec : il ne peut ni le saisir ni l'effacer.
+        if (droits.voitLesMontantsInternes()) {
+            ligne.setDebourseUnitaireHt(request.debourseUnitaireHt());
+        }
         ligne.setPiece(piece(organisation, affaireId, request.pieceId()));
         ligne.setLot(lotService.get(organisation, request.lotId()));
         ligne.setDesignation(request.designation());

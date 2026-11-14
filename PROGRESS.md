@@ -1,7 +1,7 @@
 # Avancement du projet faro
 
 > Fichier de suivi lu au début de chaque session Claude (voir `CLAUDE.md`).
-> Dernière mise à jour : 2026-10-17
+> Dernière mise à jour : 2026-11-14
 
 ## Objectif du projet
 
@@ -26,6 +26,10 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - FAIT (2026-11-12) : tableau de bord « verre dépoli » en page d'accueil (`/`, inspiré de la vidéo « Glassy Dashboard V24 » envoyée par l'utilisateur) : `GET /api/tableau-de-bord` (`com.faro.tableaubord`) → affaires actives, signé ce mois (dossiers travaux + avenants validés) avec tendance, marge réelle, en attente client, taux de transformation, signé par mois sur 12 mois, montant par étape, liste « À faire » (avenants en attente, affaires à relancer après 14 jours, client ayant consulté son espace). Frontend `pages/TableauDeBordPage.tsx` + `components/tableau/*` + `styles/tableau-de-bord.css` (animations `motion`, couleurs validées par le script dataviz : corail #d9482b clair / #e8674a sombre). La liste des affaires est sur `/affaires`.
 - FAIT (2026-11-12) : style « verre dépoli » étendu à toute l'application : barre latérale avec icônes à la place du menu du haut (tiroir sur mobile), fond pêche / corail global, cartes et tableaux translucides, accent corail, espace client et page de connexion au même style, étiquettes de mois lisibles sur mobile. Fichiers : `frontend/src/App.tsx`, `styles.css`, `styles/tableau-de-bord.css`, `components/Icones.tsx`.
 - FAIT (2026-11-13) : présentation commerciale PowerPoint pour un commercial (`docs/faro-presentation-commerciale.pptx`, 13 diapos avec notes de l'orateur : problème, déroulé de l'affaire, captures des données de démo, cible, comparatif, offres avec prix à définir, objections, prochaines étapes). Script de génération pptxgenjs : `docs/presentation/build.js` (images à recapturer dans `img/` à côté du script).
+- Lot sécurité du 2026-11-14 (3 étapes, une par commit) :
+  - [x] 1. Droits par rôle dans l'entreprise (FAIT) : `com.faro.droits` (`Droits`, `@AccesConducteur`, `DroitsInterceptor`), endpoint `GET /api/affaires/{id}/depenses`, tableau de bord réduit (`montants: false`), frontend `src/droits.ts` (boutons, sections et menus masqués). Tests `DroitsApiTest`, `AffairePage.test`, `TableauDeBordPage.test`.
+  - [ ] 2. Espace client : expiration des liens (migration V17, `faro.client.duree-lien-jours`, prolongation) et limitation du nombre de requêtes sur `/api/public/**` par adresse IP (429)
+  - [ ] 3. Photos de visite : vérification du contenu réel (signature, décodage ImageIO, dimensions), type enregistré = type détecté
 - Reprise automatique : la tâche planifiée « Reprise backlog faro » (`trig_01Dtkand7AoEABUZATjsPNrw`) a été désactivée à la fin du backlog (2026-11-11).
 - En parallèle : entretien métier non terminé (questions de suivi dans `docs/brainstorm.md`). L'utilisateur a demandé de commencer sans attendre.
 
@@ -120,6 +124,11 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Mode réseau local (wifi) : `docker-compose.reseau.yml` + `docker/Caddyfile.reseau` + realm `keycloak/reseau/` (redirections `${FARO_URL}`) : tout sur `https://FARO_HOTE` (Caddy `tls internal`, Keycloak sous `/auth`, autorité OIDC déduite de l'adresse de la page quand `VITE_OIDC_AUTHORITY` est vide). Testé (contexte sécurisé, connexion, tableau de bord). Doc : `docs/reseau-local.md` (WSL `networkingMode=mirrored` + pare-feu). PC de l'utilisateur : 192.168.1.84.
 - Volume Keycloak monté sur `/opt/keycloak/data` (le sous-dossier `h2` n'existe pas dans l'image : volume créé en root, Keycloak ne pouvait pas y écrire).
 - Thème : jetons dans `styles.css` (`--surface` translucide, `--bord-verre`, `--flou`, `--fond-degrade` sur `html`, accent corail `--accent` #c63f24 clair / #e8674a sombre avec `--accent-texte`, liens `--accent-lien`). Contrastes vérifiés (texte ≥ 4,5:1). Mise en page : `.app` = barre latérale + `.principal` ; en dessous de 900 px la barre devient un tiroir (`.menu-ouvert`).
+- Droits par rôle d'entreprise (2026-11-14) — matrice par défaut, À VALIDER par l'utilisateur :
+  - GERANT : tout. CHARGE_ETUDES : tout sauf l'administration de l'entreprise (déjà réservée au gérant par `EquipeService`).
+  - CONDUCTEUR_TRAVAUX : lecture des affaires, pièces, lots, devis (écran, PDF client / chantier, CSV), versions figées (et leurs PDF), bons de commande, visite (et PDF), avenants et montant du marché ; peut ajouter des notes et des photos de visite (pas les supprimer), créer / modifier un avenant, y ajouter / modifier / supprimer des lignes tant qu'il est en brouillon, saisir / modifier / supprimer les dépenses réelles (`GET /api/affaires/{id}/depenses` lui donne la liste sans la marge). Refusé (403 « Action non autorisée pour un conducteur de travaux… ») : créer / modifier / supprimer affaire (statut compris), pièces, lignes du devis de base, gammes, versions, passage en chantier, bibliothèque (lecture et export compris), import CSV, lots, ratios, estimation, liens d'espace client (lecture comprise : le lien est un secret), marge, bilan investisseur. Choix prudents : il ne peut ni supprimer un avenant, ni l'envoyer au client, ni enregistrer la décision du client ; il ne voit pas le déboursé sec (masqué dans le devis, les versions et les avenants ; s'il modifie une ligne d'avenant, le déboursé existant est conservé).
+  - Tableau de bord du conducteur : `montants: false`, seuls restent le nombre d'affaires actives, le nombre d'affaires par étape et la liste « À faire » ; indicateurs financiers et taux de transformation à null, signé par mois vide.
+  - Mécanisme : refus par défaut. `DroitsInterceptor` (sur `/api/**` sauf `/api/public/**`, `/api/admin/**`, `/api/me`, `/api/health`) refuse au conducteur tout endpoint qui n'est pas annoté `@AccesConducteur` (méthode ou contrôleur) ; un nouvel endpoint lui est donc fermé tant qu'on ne l'ouvre pas explicitement. Les règles fines (ligne d'avenant ou de base, déboursé masqué, tableau réduit) passent par le composant `Droits` (`estConducteur()`, `voitLesMontantsInternes()`, `refuserConducteur()`), qui charge l'utilisateur une fois par requête (partagé avec `@CurrentOrganisation`). Frontend : `src/droits.ts` (`useDroits()` → `gestion`, `montantsInternes`) masque boutons, sections et menus (Bibliothèque, Lots, Ratios) ; le serveur fait foi.
 - Une ligne de devis a toujours un lot ; la pièce est facultative (ligne « générale » : installation de chantier, évacuation…).
 
 ## Bloquants / questions
@@ -130,4 +139,5 @@ Voir `docs/business-plan-v1.0.pdf` et `docs/brainstorm.md`.
 - Ratios d'estimation : faire valider / remplacer les valeurs indicatives par la chargée d'études.
 - Offres : fixer les prix et les limites (Starter / Pro / Business), choisir le prestataire de paiement (Stripe…) et ce qui se passe à la fin de l'essai.
 - Hébergement : choisir un serveur (VPS) et un nom de domaine pour la mise en ligne (voir `docs/deploiement.md`).
+- Droits par rôle : valider la matrice par défaut (voir « Décisions », 2026-11-14), en particulier pour le conducteur de travaux : envoi des avenants au client et saisie de la décision, suppression d'un avenant en brouillon, suppression / modification de ses notes et photos de visite, accès en lecture à la bibliothèque et à l'estimation, visibilité du taux de transformation.
 - Un fournisseur OIDC est-il imposé en production (Google, Entra, Auth0…) ? Keycloak par défaut en attendant.

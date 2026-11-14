@@ -20,4 +20,11 @@ public record AvenantResponse(
         Instant decideAt,
         String decidePar,
         String decisionCommentaire) {
+
+    /** Même avenant sans le déboursé sec des lignes (coûts internes cachés au conducteur de travaux). */
+    public AvenantResponse sansDebourse() {
+        return new AvenantResponse(id, numero, objet, motif, statut,
+            lignes.stream().map(LigneResponse::sansDebourse).toList(), totaux, createdAt, envoyeAt, decideAt, decidePar,
+            decisionCommentaire);
+    }
 }

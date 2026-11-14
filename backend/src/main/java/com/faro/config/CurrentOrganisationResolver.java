@@ -4,8 +4,6 @@ import java.util.List;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -14,15 +12,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.faro.organisation.CurrentOrganisation;
 import com.faro.organisation.Organisation;
-import com.faro.user.AppUserService;
+import com.faro.droits.Droits;
 
 @Configuration
 public class CurrentOrganisationResolver implements HandlerMethodArgumentResolver, WebMvcConfigurer {
 
-    private final AppUserService userService;
+    private final Droits droits;
 
-    public CurrentOrganisationResolver(AppUserService userService) {
-        this.userService = userService;
+    public CurrentOrganisationResolver(Droits droits) {
+        this.droits = droits;
     }
 
     @Override
@@ -39,8 +37,7 @@ public class CurrentOrganisationResolver implements HandlerMethodArgumentResolve
     @Override
     public Organisation resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
             NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-        JwtAuthenticationToken authentication =
-            (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        return userService.current(authentication.getToken()).getOrganisation();
+        // Utilisateur partagé avec le contrôle des droits : chargé une seule fois par requête.
+        return droits.utilisateur().getOrganisation();
     }
 }

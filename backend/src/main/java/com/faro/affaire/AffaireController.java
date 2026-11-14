@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.faro.droits.AccesConducteur;
 import com.faro.organisation.CurrentOrganisation;
 import com.faro.organisation.Organisation;
 
@@ -29,11 +30,13 @@ public class AffaireController {
         this.affaireService = affaireService;
     }
 
+    @AccesConducteur
     @GetMapping
     public List<AffaireResponse> list(@CurrentOrganisation Organisation organisation) {
         return affaireService.list(organisation).stream().map(AffaireResponse::from).toList();
     }
 
+    @AccesConducteur
     @GetMapping("/{id}")
     public AffaireResponse get(@CurrentOrganisation Organisation organisation, @PathVariable UUID id) {
         return AffaireResponse.from(affaireService.get(organisation, id));

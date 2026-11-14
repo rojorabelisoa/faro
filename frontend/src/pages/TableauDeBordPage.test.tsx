@@ -22,6 +22,7 @@ const indicateur = (valeur: number | null, detail: string, serie: number[] = [],
   ({ valeur, tendance, serie, detail })
 
 const TABLEAU: TableauDeBord = {
+  montants: true,
   affairesActives: indicateur(3, '1 créée(s) ce mois-ci', [0, 1, 0, 2, 1, 1]),
   signeCeMois: indicateur(10500, 'dossiers travaux et avenants', [0, 0, 0, 0, 4000, 10500], 162.5),
   margeReelle: indicateur(42.9, 'sur les chantiers avec dépenses'),
@@ -38,13 +39,14 @@ const TABLEAU: TableauDeBord = {
     affaire: 'Maison gagnée', date: '2026-11-10T10:00:00Z' }],
 }
 
+const me = { id: '1', subject: 's', email: null, displayName: 'Claire Martin', roles: [],
+  organisation: { id: 'o', nom: 'Rénov Plus' }, roleEntreprise: 'GERANT' as const }
+
 const texte = (valeur: string | null) => (valeur ?? '').replace(/[  ]/g, ' ')
 
 describe('TableauDeBordPage', () => {
   it('salue l’utilisateur et présente les indicateurs, l’agenda et les graphiques', async () => {
     const api = { tableauDeBord: vi.fn().mockResolvedValue(TABLEAU) }
-    const me = { id: '1', subject: 's', email: null, displayName: 'Claire Martin', roles: [],
-      organisation: { id: 'o', nom: 'Rénov Plus' }, roleEntreprise: 'GERANT' as const }
     render(
       <SessionContext.Provider value={{ api: api as unknown as Api, me }}>
         <MemoryRouter><TableauDeBordPage /></MemoryRouter>
@@ -60,5 +62,26 @@ describe('TableauDeBordPage', () => {
     expect(screen.getByRole('img', { name: 'Montant signé par mois sur 12 mois' })).toBeInTheDocument()
     expect(texte(screen.getByRole('img', { name: /Montant des affaires par étape/ }).getAttribute('aria-label')))
       .toBe('Montant des affaires par étape, total 12 500,00 € HT')
+  })
+
+  it('n’affiche rien de financier au conducteur de travaux', async () => {
+    const reduit: TableauDeBord = {
+      ...TABLEAU, montants: false, signeCeMois: null, margeReelle: null, enAttenteClient: null, transformation: null,
+      signeParMois: [], pipeline: TABLEAU.pipeline.map((e) => ({ ...e, montantHt: null })),
+    }
+    const api = { tableauDeBord: vi.fn().mockResolvedValue(reduit) }
+    render(
+      <SessionContext.Provider value={{ api: api as unknown as Api, me: { ...me, roleEntreprise: 'CONDUCTEUR_TRAVAUX' } }}>
+        <MemoryRouter><TableauDeBordPage /></MemoryRouter>
+      </SessionContext.Provider>,
+    )
+
+    expect(await screen.findByRole('region', { name: 'Affaires actives' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Maison gagnée/ })).toBeInTheDocument()
+    expect(screen.getByText('Chantier').closest('li')).toHaveTextContent('Chantier1')
+    expect(screen.queryByRole('region', { name: 'Signé ce mois-ci' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Marge réelle' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/€/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '+ Nouvelle affaire' })).not.toBeInTheDocument()
   })
 })

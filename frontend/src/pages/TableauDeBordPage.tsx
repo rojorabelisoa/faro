@@ -1,12 +1,13 @@
 import { motion, type Variants } from 'motion/react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import type { Indicateur, TableauDeBord } from '../api'
+import type { Indicateur, TableauDeBord, TableauDeBordComplet } from '../api'
 import { useSession } from '../ApiContext'
 import { Anneau, Compteur, MiniCourbe } from '../components/tableau/graphiques'
 import Pipeline from '../components/tableau/Pipeline'
 import SigneParMois from '../components/tableau/SigneParMois'
-import { formatEuros } from '../format'
+import { useDroits } from '../droits'
+import { formatEuros, LIBELLES_STATUT } from '../format'
 
 const apparition: Variants = {
   cache: { opacity: 0, y: 16 },
@@ -23,6 +24,7 @@ function salutation(maintenant: Date) {
 /** Page d'accueil : l'activité de l'entreprise en un coup d'œil (style « verre dépoli »). */
 export default function TableauDeBordPage() {
   const { api, me } = useSession()
+  const { gestion } = useDroits()
   const [tableau, setTableau] = useState<TableauDeBord | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,38 +48,67 @@ export default function TableauDeBordPage() {
         </div>
         <div className="tdb-actions">
           <Link className="tdb-bouton" to="/entreprise">Inviter un collègue</Link>
-          <Link className="tdb-bouton sombre" to="/affaires?nouvelle">+ Nouvelle affaire</Link>
+          {gestion && <Link className="tdb-bouton sombre" to="/affaires?nouvelle">+ Nouvelle affaire</Link>}
         </div>
       </header>
 
       {error && <p role="alert" className="erreur">{error}</p>}
       {!tableau && !error && <p className="tdb-sous-titre">Chargement…</p>}
 
-      {tableau && (
-        <motion.div className="tdb-grille" initial="cache" animate="visible">
-          <Hero tableau={tableau} />
-          <Agenda tableau={tableau} maintenant={maintenant} />
+      {tableau && !tableau.montants && <TableauReduit tableau={tableau} maintenant={maintenant} />}
 
-          <Carte i={2} titre="Affaires actives" indicateur={tableau.affairesActives} format={entier} icone={<IconeDossier />} />
-          <Carte i={3} titre="Signé ce mois-ci" indicateur={tableau.signeCeMois} format={euros} icone={<IconeEuro />} accent />
-          <Carte i={4} titre="Marge réelle" indicateur={tableau.margeReelle} format={pourcent} icone={<IconeCourbe />} />
-          <Carte i={5} titre="En attente client" indicateur={tableau.enAttenteClient} format={euros} icone={<IconeSablier />} />
-
-          <motion.section className="verre tdb-large" custom={6} variants={apparition}>
-            <h2>Montant signé par mois</h2>
-            <SigneParMois donnees={tableau.signeParMois} />
-          </motion.section>
-          <motion.section className="verre tdb-etroit" custom={7} variants={apparition}>
-            <h2>Affaires par étape</h2>
-            <Pipeline pipeline={tableau.pipeline} />
-          </motion.section>
-        </motion.div>
-      )}
+      {tableau && tableau.montants && <TableauComplet tableau={tableau as TableauDeBordComplet} maintenant={maintenant} />}
     </div>
   )
 }
 
-function Hero({ tableau }: { tableau: TableauDeBord }) {
+/** Tout le tableau de bord, montants compris (gérant, chargé d'études). */
+function TableauComplet({ tableau, maintenant }: { tableau: TableauDeBordComplet; maintenant: Date }) {
+  return (
+    <motion.div className="tdb-grille" initial="cache" animate="visible">
+      <Hero tableau={tableau} />
+      <Agenda tableau={tableau} maintenant={maintenant} />
+
+      <Carte i={2} titre="Affaires actives" indicateur={tableau.affairesActives} format={entier} icone={<IconeDossier />} />
+      <Carte i={3} titre="Signé ce mois-ci" indicateur={tableau.signeCeMois} format={euros} icone={<IconeEuro />} accent />
+      <Carte i={4} titre="Marge réelle" indicateur={tableau.margeReelle} format={pourcent} icone={<IconeCourbe />} />
+      <Carte i={5} titre="En attente client" indicateur={tableau.enAttenteClient} format={euros} icone={<IconeSablier />} />
+
+      <motion.section className="verre tdb-large" custom={6} variants={apparition}>
+        <h2>Montant signé par mois</h2>
+        <SigneParMois donnees={tableau.signeParMois} />
+      </motion.section>
+      <motion.section className="verre tdb-etroit" custom={7} variants={apparition}>
+        <h2>Affaires par étape</h2>
+        <Pipeline pipeline={tableau.pipeline} />
+      </motion.section>
+    </motion.div>
+  )
+}
+
+/** Conducteur de travaux : rien de financier, seulement « À faire » et le nombre d'affaires. */
+function TableauReduit({ tableau, maintenant }: { tableau: TableauDeBord; maintenant: Date }) {
+  return (
+    <motion.div className="tdb-grille" initial="cache" animate="visible">
+      <Agenda tableau={tableau} maintenant={maintenant} />
+      <Carte i={2} titre="Affaires actives" indicateur={tableau.affairesActives} format={entier} icone={<IconeDossier />} />
+      <motion.section className="verre tdb-etroit" custom={3} variants={apparition}>
+        <h2>Affaires par étape</h2>
+        <ul className="legende">
+          {tableau.pipeline.map((etape, i) => (
+            <li key={etape.statut}>
+              <span className={`pastille-couleur etape-${i}`} aria-hidden="true" />
+              <span>{LIBELLES_STATUT[etape.statut]}</span>
+              <strong>{etape.nombre}</strong>
+            </li>
+          ))}
+        </ul>
+      </motion.section>
+    </motion.div>
+  )
+}
+
+function Hero({ tableau }: { tableau: TableauDeBordComplet }) {
   const { transformation, signeCeMois, pipeline } = tableau
   const enChantier = pipeline.find((e) => e.statut === 'CHANTIER')?.nombre ?? 0
   const lance = (signeCeMois.valeur ?? 0) > 0

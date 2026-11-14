@@ -7,7 +7,10 @@ import java.util.UUID;
 
 import com.faro.affaire.StatutAffaire;
 
-/** Indicateurs de l'entreprise pour la page d'accueil. Montants HT. */
+/**
+ * Indicateurs de l'entreprise pour la page d'accueil. Montants HT.
+ * montants = false : version réduite pour le conducteur de travaux (voir {@link #sansMontants()}).
+ */
 public record TableauDeBordResponse(
         Indicateur affairesActives,
         Indicateur signeCeMois,
@@ -16,7 +19,17 @@ public record TableauDeBordResponse(
         Transformation transformation,
         List<Mois> signeParMois,
         List<Etape> pipeline,
-        List<AFaire> aFaire) {
+        List<AFaire> aFaire,
+        boolean montants) {
+
+    /**
+     * Sans rien de financier : seuls restent le nombre d'affaires actives, le nombre d'affaires par étape et la
+     * liste « À faire » ; les indicateurs financiers sont null et le signé par mois est vide.
+     */
+    public TableauDeBordResponse sansMontants() {
+        return new TableauDeBordResponse(affairesActives, null, null, null, null, List.of(),
+            pipeline.stream().map(e -> new Etape(e.statut(), e.nombre(), null)).toList(), aFaire, false);
+    }
 
     /**
      * valeur : le chiffre affiché ; tendance : variation en % par rapport au mois précédent (null si non calculable) ;

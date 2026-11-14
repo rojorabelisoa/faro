@@ -17,6 +17,12 @@ public record DevisResponse(
         /** Total HT si chaque gamme était retenue partout ; null sans ligne d'option. */
         Map<Gamme, BigDecimal> totauxParGamme) {
 
+    /** Même devis sans le déboursé sec des lignes (coûts internes cachés au conducteur de travaux). */
+    public DevisResponse sansDebourse() {
+        return new DevisResponse(lignes.stream().map(LigneResponse::sansDebourse).toList(), parPiece, parLot, tva,
+            totalHt, totalTva, totalTtc, totauxParGamme);
+    }
+
     public record LigneResponse(
             UUID id,
             UUID pieceId,
@@ -42,6 +48,11 @@ public record DevisResponse(
                 ligne.getDesignation(), ligne.getDescription(), ligne.getUnite(),
                 ligne.getQuantite(), ligne.getPrixUnitaireHt(), ligne.getTauxTva(), ligne.getMontantHt(),
                 ligne.getGamme(), ligne.getDebourseUnitaireHt(), ligne.isIncluse(), ligne.getOrdre());
+        }
+
+        public LigneResponse sansDebourse() {
+            return new LigneResponse(id, pieceId, lotId, ouvrageId, designation, description, unite, quantite,
+                prixUnitaireHt, tauxTva, montantHt, gamme, null, incluse, ordre);
         }
     }
 
