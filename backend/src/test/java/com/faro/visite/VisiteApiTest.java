@@ -126,6 +126,44 @@ class VisiteApiTest {
             .andExpect(status().isUnsupportedMediaType());
     }
 
+    private org.springframework.test.web.servlet.ResultActions envoyer(String nom, String type, byte[] donnees)
+            throws Exception {
+        return mockMvc.perform(multipart("/api/affaires/" + affaireId + "/photos")
+            .file(new MockMultipartFile("fichier", nom, type, donnees)).with(user(SUB)));
+    }
+
+    private static byte[] image(int largeur, int hauteur, String format) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(new BufferedImage(largeur, hauteur, BufferedImage.TYPE_INT_RGB), format, out);
+        return out.toByteArray();
+    }
+
+    @Test
+    void checksTheRealContentOfPhotos() throws Exception {
+        // Le type enregistré est celui détecté (alias image/jpg normalisé).
+        envoyer("photo.jpg", "image/jpg", image(40, 30, "jpg")).andExpect(status().isCreated())
+            .andExpect(jsonPath("$.contentType").value("image/jpeg"));
+        envoyer("photo.webp", "image/webp", VerificationImageTest.webpSansPerte(64, 48)).andExpect(status().isCreated())
+            .andExpect(jsonPath("$.contentType").value("image/webp"));
+
+        // Signature incohérente avec le type annoncé, ou pas une image du tout.
+        envoyer("photo.jpg", "image/jpeg", png()).andExpect(status().isUnsupportedMediaType());
+        envoyer("page.png", "image/png", "<html><script>alert(1)</script></html>".getBytes())
+            .andExpect(status().isUnsupportedMediaType());
+        // Bonne signature mais contenu illisible (tronqué ou inventé).
+        byte[] tronque = java.util.Arrays.copyOf(png(), 40);
+        envoyer("tronque.png", "image/png", tronque).andExpect(status().isBadRequest());
+        envoyer("faux.jpg", "image/jpeg", new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 1, 2, 3, 4, 5})
+            .andExpect(status().isBadRequest());
+        // Dimensions absurdes.
+        envoyer("bande.png", "image/png", image(12_001, 1, "png")).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.detail").value("Image trop grande (12001 × 1 pixels) : 12 000 pixels de côté au maximum"));
+        envoyer("geante.webp", "image/webp", VerificationImageTest.webpSansPerte(16_000, 10)).andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/affaires/" + affaireId + "/visite").with(user(SUB)))
+            .andExpect(jsonPath("$.photos", hasSize(2)));
+    }
+
     @Test
     void anotherOrganisationCannotSeeTheVisit() throws Exception {
         String photoId = JsonPath.read(mockMvc.perform(multipart("/api/affaires/" + affaireId + "/photos")

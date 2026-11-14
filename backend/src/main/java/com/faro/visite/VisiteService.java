@@ -3,10 +3,8 @@ package com.faro.visite;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.faro.affaire.Affaire;
 import com.faro.affaire.AffaireService;
@@ -64,15 +62,11 @@ public class VisiteService {
 
     public Photo addPhoto(Organisation organisation, UUID affaireId, UUID pieceId, String legende, String contentType,
             byte[] donnees) {
-        if (contentType == null || !TYPES_IMAGE.contains(contentType)) {
-            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Formats acceptés : JPEG, PNG, WebP");
-        }
-        if (donnees.length == 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Photo vide");
-        }
+        // Contenu réel vérifié (signature, dimensions, décodage) ; on enregistre le type détecté, pas le type annoncé.
+        String typeDetecte = VerificationImage.verifier(contentType, donnees);
         String texte = legende == null || legende.isBlank() ? null : legende.trim();
         return photos.save(new Photo(affaireService.get(organisation, affaireId), piece(organisation, affaireId, pieceId),
-            texte, contentType, donnees));
+            texte, typeDetecte, donnees));
     }
 
     @Transactional(readOnly = true)
